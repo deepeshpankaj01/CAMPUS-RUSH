@@ -1,0 +1,32 @@
+{
+  "name": "deepesh-dash-campus-rush",
+  "version": "1.0.0",
+  "description": "DEEPESH DASH CAMPUS RUSH - Premium 3D Endless Runner Game",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "test": "node --test tests/core.test.ts"
+  },
+  "keywords": [
+    "game",
+    "endless-runner",
+    "threejs",
+    "pwa",
+    "offline-ready",
+    "arcade"
+  ],
+  "author": "Deepesh Pankaj",
+  "license": "MIT",
+  "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "@types/three": "^0.186.0",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.11"
+  }
+}
