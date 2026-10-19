@@ -203,3 +203,5 @@ Copy the contents of `dist/` into your web server's root folder (`/var/www/html`
 - **Developer & Creator**: Deepesh Pankaj
 - **Game Title**: DEEPESH DASH CAMPUS RUSH
 - **License**: MIT
+#   C A M P U S - R U S H  
+ 
