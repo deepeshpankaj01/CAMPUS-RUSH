@@ -1,5 +1,5 @@
 /**
- * Deepesh Dash: Campus Rush - Collectibles (Byte Coins, Idea Sparks, Power-Ups)
+ * Campus Rush - Collectibles (Byte Coins, Idea Sparks, Power-Ups) with Object Pooling
  */
 import * as THREE from 'three';
 import { COLORS, GAME_CONFIG, LANES, LaneIndex } from './Constants';
@@ -21,6 +21,9 @@ export interface CollectibleInstance {
 export class CollectiblesManager {
   private scene: THREE.Scene;
   public items: CollectibleInstance[] = [];
+
+  // Object pool by collectible type
+  private pool: Map<CollectibleType, CollectibleInstance[]> = new Map();
 
   // Spawning logic
   private nextSpawnZ: number = -25;
@@ -51,7 +54,14 @@ export class CollectiblesManager {
 
   public reset(): void {
     for (const item of this.items) {
-      this.scene.remove(item.group);
+      item.active = false;
+      item.group.visible = false;
+      let list = this.pool.get(item.type);
+      if (!list) {
+        list = [];
+        this.pool.set(item.type, list);
+      }
+      list.push(item);
     }
     this.items = [];
     this.nextSpawnZ = -25;
@@ -79,7 +89,6 @@ export class CollectiblesManager {
         const distSq = dx * dx + dy * dy + dz * dz;
 
         if (distSq < GAME_CONFIG.magnetRadius * GAME_CONFIG.magnetRadius) {
-          // Attract strongly towards player
           const pullSpeed = 24.0 * dt;
           item.x += dx * pullSpeed;
           item.baseY += dy * pullSpeed;
@@ -87,9 +96,16 @@ export class CollectiblesManager {
         }
       }
 
-      // Despawn behind camera
+      // Recycle item behind camera
       if (item.z > 15) {
-        this.scene.remove(item.group);
+        item.active = false;
+        item.group.visible = false;
+        let list = this.pool.get(item.type);
+        if (!list) {
+          list = [];
+          this.pool.set(item.type, list);
+        }
+        list.push(item);
         this.items.splice(i, 1);
       }
     }
@@ -111,33 +127,51 @@ export class CollectiblesManager {
       const powerTypes: CollectibleType[] = ['POWERUP_SHIELD', 'POWERUP_MAGNET', 'POWERUP_SPRINT'];
       const pType = powerTypes[Math.floor(Math.random() * powerTypes.length)];
       const lane: LaneIndex = Math.floor(Math.random() * 3) as LaneIndex;
-      this.spawnItem(pType, lane, z, 1.2);
+      this.getOrCreateItem(pType, lane, z, 1.2);
       return;
     }
 
     // 25% chance for Idea Spark (charges Focus Mode!)
     if (roll < 0.37) {
       const lane: LaneIndex = Math.floor(Math.random() * 3) as LaneIndex;
-      this.spawnItem('IDEA_SPARK', lane, z, 1.3);
+      this.getOrCreateItem('IDEA_SPARK', lane, z, 1.3);
       // Flanked by coins
-      this.spawnItem('BYTE_COIN', lane, z - 3, 1.0);
-      this.spawnItem('BYTE_COIN', lane, z + 3, 1.0);
+      this.getOrCreateItem('BYTE_COIN', lane, z - 3, 1.0);
+      this.getOrCreateItem('BYTE_COIN', lane, z + 3, 1.0);
       return;
     }
 
     // 63% chance for Byte Coin Trail / Arc
     const lane: LaneIndex = Math.floor(Math.random() * 3) as LaneIndex;
-    const isArc = Math.random() > 0.6; // High jumping arc trail
+    const isArc = Math.random() > 0.6;
 
     for (let c = 0; c < 5; c++) {
       const cz = z - c * 2.8;
-      // If arc, middle coins are elevated up to 2.4m
       const cy = isArc ? 1.0 + Math.sin((c / 4) * Math.PI) * 1.5 : 1.0;
-      this.spawnItem('BYTE_COIN', lane, cz, cy);
+      this.getOrCreateItem('BYTE_COIN', lane, cz, cy);
     }
   }
 
-  private spawnItem(type: CollectibleType, lane: LaneIndex, z: number, y: number): void {
+  private getOrCreateItem(type: CollectibleType, lane: LaneIndex, z: number, y: number): void {
+    const list = this.pool.get(type);
+    if (list && list.length > 0) {
+      const item = list.pop()!;
+      item.lane = lane;
+      item.x = LANES[lane];
+      item.y = y;
+      item.z = z;
+      item.baseY = y;
+      item.active = true;
+      item.group.visible = true;
+      item.group.position.set(LANES[lane], y, z);
+      this.items.push(item);
+      return;
+    }
+
+    this.spawnNewItem(type, lane, z, y);
+  }
+
+  private spawnNewItem(type: CollectibleType, lane: LaneIndex, z: number, y: number): void {
     const x = LANES[lane];
     let group: THREE.Group;
 
@@ -180,11 +214,10 @@ export class CollectiblesManager {
   private buildCoinMesh(): THREE.Group {
     const g = new THREE.Group();
     const mesh = new THREE.Mesh(this.coinGeometry, this.coinMaterial);
-    mesh.rotation.x = Math.PI / 2; // Face forward
+    mesh.rotation.x = Math.PI / 2;
     mesh.castShadow = true;
     g.add(mesh);
 
-    // Embossed inner core
     const coreGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.14, 8);
     const coreMat = new THREE.MeshBasicMaterial({ color: COLORS.electricCyan });
     const core = new THREE.Mesh(coreGeo, coreMat);
@@ -196,11 +229,9 @@ export class CollectiblesManager {
 
   private buildSparkMesh(): THREE.Group {
     const g = new THREE.Group();
-    // Glowing cyan/violet dual crystal
     const crystal = new THREE.Mesh(this.sparkGeometry, this.sparkMaterial);
     g.add(crystal);
 
-    // Outer rotating glowing wireframe
     const wireGeo = new THREE.IcosahedronGeometry(0.65, 1);
     const wireMat = new THREE.MeshBasicMaterial({
       color: COLORS.vividViolet,
@@ -216,7 +247,6 @@ export class CollectiblesManager {
 
   private buildShieldPickup(): THREE.Group {
     const g = new THREE.Group();
-    // Glowing 3D Shield Emblem
     const shieldGeo = new THREE.CylinderGeometry(0.5, 0.4, 0.16, 6);
     const shieldMat = new THREE.MeshStandardMaterial({
       color: COLORS.electricCyan,
@@ -228,7 +258,6 @@ export class CollectiblesManager {
     shield.rotation.x = Math.PI / 2;
     g.add(shield);
 
-    // Protective outer halo
     const haloGeo = new THREE.TorusGeometry(0.7, 0.05, 6, 16);
     const haloMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
     const halo = new THREE.Mesh(haloGeo, haloMat);
@@ -239,7 +268,6 @@ export class CollectiblesManager {
 
   private buildMagnetPickup(): THREE.Group {
     const g = new THREE.Group();
-    // Glowing Red/Silver Horseshoe Magnet
     const magnetGeo = new THREE.TorusGeometry(0.45, 0.14, 8, 16, Math.PI);
     const magnetMat = new THREE.MeshStandardMaterial({
       color: COLORS.coralAccent,
@@ -250,7 +278,6 @@ export class CollectiblesManager {
     magnet.rotation.z = Math.PI;
     g.add(magnet);
 
-    // Silver poles
     const tipMat = new THREE.MeshStandardMaterial({ color: 0xF4F6FC, metalness: 0.9 });
     for (const tx of [-0.45, 0.45]) {
       const tipGeo = new THREE.BoxGeometry(0.28, 0.24, 0.28);
@@ -264,7 +291,6 @@ export class CollectiblesManager {
 
   private buildSprintPickup(): THREE.Group {
     const g = new THREE.Group();
-    // Glowing Saffron Lightning Bolt / Energy Capsule
     const boltGeo = new THREE.OctahedronGeometry(0.5, 0);
     const boltMat = new THREE.MeshStandardMaterial({
       color: COLORS.warmSaffron,
@@ -278,7 +304,6 @@ export class CollectiblesManager {
     return g;
   }
 
-  // Check collision with player
   public checkPickups(playerPos: THREE.Vector3, pickupRadius: number): CollectibleInstance[] {
     const picked: CollectibleInstance[] = [];
 
@@ -293,12 +318,47 @@ export class CollectiblesManager {
 
       if (distSq < pickupRadius * pickupRadius) {
         item.active = false;
+        item.group.visible = false;
         picked.push(item);
-        this.scene.remove(item.group);
+        let list = this.pool.get(item.type);
+        if (!list) {
+          list = [];
+          this.pool.set(item.type, list);
+        }
+        list.push(item);
         this.items.splice(i, 1);
       }
     }
 
     return picked;
+  }
+
+  public dispose(): void {
+    const allInstances: CollectibleInstance[] = [...this.items];
+    for (const list of this.pool.values()) {
+      allInstances.push(...list);
+    }
+    for (const item of allInstances) {
+      this.scene.remove(item.group);
+      item.group.traverse((child) => {
+        const mesh = child as THREE.Mesh;
+        if (mesh.isMesh) {
+          if (mesh.geometry) mesh.geometry.dispose();
+          if (mesh.material) {
+            if (Array.isArray(mesh.material)) {
+              mesh.material.forEach((m) => m.dispose());
+            } else {
+              mesh.material.dispose();
+            }
+          }
+        }
+      });
+    }
+    this.items = [];
+    this.pool.clear();
+    this.coinGeometry.dispose();
+    this.coinMaterial.dispose();
+    this.sparkGeometry.dispose();
+    this.sparkMaterial.dispose();
   }
 }

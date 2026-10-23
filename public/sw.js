@@ -1,5 +1,5 @@
-// Deepesh Dash: Campus Rush - Offline Service Worker
-const CACHE_NAME = 'deepesh-dash-v1.0.0';
+// Campus Rush - Offline Service Worker
+const CACHE_NAME = 'campus-rush-v1.1.0';
 
 const PRECACHE_ASSETS = [
   './',

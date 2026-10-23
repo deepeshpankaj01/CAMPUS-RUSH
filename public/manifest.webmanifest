@@ -1,7 +1,7 @@
 {
-  "name": "Deepesh Dash: Campus Rush",
-  "short_name": "DeepeshDash",
-  "description": "One More Run. Beat Your Best. 3D Arcade Endless Runner created with passion by Deepesh Pankaj.",
+  "name": "Campus Rush",
+  "short_name": "CampusRush",
+  "description": "Campus Rush - 3D Arcade Endless Runner. One More Run. Beat Your Best.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

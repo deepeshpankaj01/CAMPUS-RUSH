@@ -107,17 +107,25 @@ server.listen(PORT, async () => {
       expression: 'document.title'
     });
     console.log(`Page Title: "${titleEval.result.value}"`);
-    if (titleEval.result.value !== 'Deepesh Dash: Campus Rush') {
+    if (titleEval.result.value !== 'Campus Rush') {
       throw new Error(`Unexpected title: ${titleEval.result.value}`);
     }
 
-    // 2. Check if Main Menu is active
+    // 2. Check if Main Menu is active and has correct branding
     const menuEval = await send('Runtime.evaluate', {
       expression: 'document.getElementById("main-menu").classList.contains("active")'
     });
     console.log(`Main Menu Active: ${menuEval.result.value}`);
     if (!menuEval.result.value) {
       throw new Error('Main menu was not active on load');
+    }
+
+    const creditEval = await send('Runtime.evaluate', {
+      expression: 'document.querySelector(".dev-credit-tag")?.textContent?.trim()'
+    });
+    console.log(`Credit Footer: "${creditEval.result.value}"`);
+    if (creditEval.result.value !== 'mere bhai Deepesh Pankaj') {
+      throw new Error(`Unexpected credit text: "${creditEval.result.value}"`);
     }
 
     // 3. Check Canvas element exists
@@ -129,13 +137,13 @@ server.listen(PORT, async () => {
       throw new Error('Canvas element not found in DOM');
     }
 
-    // 4. Simulate Click on "PLAY NOW"
-    console.log('Simulating click on "PLAY NOW"...');
+    // 4. Simulate Click on "PLAY"
+    console.log('Simulating click on "PLAY"...');
     await send('Runtime.evaluate', {
       expression: 'document.getElementById("btn-play-now").click()'
     });
 
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 800));
 
     // 5. Verify HUD is active and Game is Running
     const hudEval = await send('Runtime.evaluate', {
@@ -146,7 +154,36 @@ server.listen(PORT, async () => {
       throw new Error('HUD screen did not become active after Play click');
     }
 
-    // 6. Simulate Keyboard Controls (Arrow Left, Space Jump, Down Slide)
+    // 6. Test Pause & Resume
+    console.log('Testing Pause Button...');
+    await send('Runtime.evaluate', {
+      expression: 'document.getElementById("btn-hud-pause").click()'
+    });
+    await new Promise((r) => setTimeout(r, 400));
+
+    const pauseEval = await send('Runtime.evaluate', {
+      expression: 'document.getElementById("pause-modal").classList.contains("active")'
+    });
+    console.log(`Pause Modal Active: ${pauseEval.result.value}`);
+    if (!pauseEval.result.value) {
+      throw new Error('Pause modal did not open on pause click');
+    }
+
+    console.log('Testing Resume Button...');
+    await send('Runtime.evaluate', {
+      expression: 'document.getElementById("btn-pause-resume").click()'
+    });
+    await new Promise((r) => setTimeout(r, 400));
+
+    const resumeEval = await send('Runtime.evaluate', {
+      expression: '!document.getElementById("pause-modal").classList.contains("active")'
+    });
+    console.log(`Pause Modal Closed after Resume: ${resumeEval.result.value}`);
+    if (!resumeEval.result.value) {
+      throw new Error('Pause modal did not close on resume click');
+    }
+
+    // 7. Simulate Keyboard Controls (Arrow Left, Space Jump, Down Slide)
     console.log('Simulating player keyboard inputs...');
     await send('Runtime.evaluate', {
       expression: `
@@ -159,11 +196,11 @@ server.listen(PORT, async () => {
     // Let the game run for 1.5 seconds
     await new Promise((r) => setTimeout(r, 1500));
 
-    // 7. Check if Distance and Score progressed
-    const scoreEval = await send('Runtime.evaluate', {
+    // 8. Check if Distance traveled progressed
+    const distEval = await send('Runtime.evaluate', {
       expression: 'document.getElementById("hud-dist-val").textContent'
     });
-    console.log(`Distance traveled: ${scoreEval.result.value}`);
+    console.log(`Distance traveled: ${distEval.result.value}`);
 
     // Capture screenshot
     const screenshot = await send('Page.captureScreenshot', { format: 'png' });

@@ -1,5 +1,5 @@
 /**
- * Deepesh Dash: Campus Rush - Main Application Entrypoint
+ * Campus Rush - Main Application Entrypoint
  */
 import './styles/main.css';
 import { GameEngine } from './game/GameEngine';
@@ -67,7 +67,7 @@ window.addEventListener('DOMContentLoaded', () => {
         if (engine.state === 'PLAYING') {
           ui.openPauseModal();
         } else if (engine.state === 'PAUSED') {
-          ui.closeModal();
+          ui.closePauseModal();
           engine.resume();
         }
         break;
@@ -78,10 +78,14 @@ window.addEventListener('DOMContentLoaded', () => {
   let touchStartX = 0;
   let touchStartY = 0;
   let touchStartTime = 0;
+  let touchStartedOnInteractive = false;
 
   window.addEventListener(
     'touchstart',
     (e) => {
+      const target = e.target as HTMLElement | null;
+      touchStartedOnInteractive = !!(target && target.closest('button, .btn-hud-icon, .btn-primary-action, .btn-secondary-action'));
+
       if (e.touches.length === 1) {
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
@@ -105,7 +109,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener(
     'touchend',
     (e) => {
-      if (engine.state !== 'PLAYING') return;
+      if (engine.state !== 'PLAYING' || touchStartedOnInteractive) return;
 
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
@@ -116,8 +120,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const absX = Math.abs(dx);
       const absY = Math.abs(dy);
 
-      // Swipe threshold: at least 32px within 500ms
-      if (dt < 500 && (absX > 32 || absY > 32)) {
+      // Swipe threshold: at least 28px within 500ms
+      if (dt < 500 && (absX > 28 || absY > 28)) {
         if (absX > absY) {
           // Horizontal swipe
           if (dx < 0) {
@@ -138,12 +142,19 @@ window.addEventListener('DOMContentLoaded', () => {
     { passive: false }
   );
 
-  // 5. Register Offline PWA Service Worker
+  // 5. Visibility Change (Auto-pause when switching apps/tabs)
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && engine.state === 'PLAYING') {
+      ui.openPauseModal();
+    }
+  });
+
+  // 6. Register Offline PWA Service Worker
   if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
     navigator.serviceWorker
       .register('./sw.js')
       .then((reg) => {
-        console.log('Deepesh Dash ServiceWorker registered:', reg.scope);
+        console.log('Campus Rush ServiceWorker registered:', reg.scope);
       })
       .catch((err) => {
         console.warn('ServiceWorker registration error:', err);

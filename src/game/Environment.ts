@@ -1,11 +1,12 @@
 /**
- * Deepesh Dash: Campus Rush - 5 Procedural Environments & Zones
+ * Campus Rush - 5 Procedural Environments & Zones
  */
 import * as THREE from 'three';
-import { COLORS, GAME_CONFIG } from './Constants';
+import { COLORS, ZoneType, StageInfo, ZONE_SEQUENCE, getStageInfo } from './Constants';
 import { GameRenderer } from './Renderer';
 
-export type ZoneType = 'CAMPUS_MORNING' | 'BHOPAL_LAKEFRONT' | 'MARKET_RUSH' | 'NEON_CODE_CITY' | 'FESTIVAL_NIGHTS';
+export type { ZoneType, StageInfo };
+export { ZONE_SEQUENCE, getStageInfo };
 
 interface RoadSegment {
   group: THREE.Group;
@@ -185,7 +186,6 @@ export class EnvironmentManager {
 
   // --- Zone C: Market Rush ---
   private buildMarketScenery(seg: THREE.Group): void {
-    // Left & Right colorful street shops with striped awnings
     for (const side of [-1, 1]) {
       const shop = this.createMarketShop(side);
       shop.position.set(side * 11, 0, 0);
@@ -195,13 +195,11 @@ export class EnvironmentManager {
 
   // --- Zone D: Neon Code City ---
   private buildNeonCityScenery(seg: THREE.Group): void {
-    // Cyber geometric skyscrapers with glowing cyan/violet window matrices
     for (const side of [-1, 1]) {
       const tower = this.createCyberTower();
       tower.position.set(side * 18, 0, 0);
       seg.add(tower);
 
-      // Neon street pillars
       const pillarGeo = new THREE.BoxGeometry(0.3, 6, 0.3);
       const pillarMat = new THREE.MeshBasicMaterial({ color: side < 0 ? COLORS.electricCyan : COLORS.vividViolet });
       const pillar = new THREE.Mesh(pillarGeo, pillarMat);
@@ -212,14 +210,12 @@ export class EnvironmentManager {
 
   // --- Zone E: Festival Nights ---
   private buildFestivalScenery(seg: THREE.Group): void {
-    // Warm festive buildings
     for (const side of [-1, 1]) {
       const building = this.createAcademicBuilding();
       building.position.set(side * 18, 0, 0);
       seg.add(building);
     }
 
-    // Overhead string of glowing festival lanterns (kandils)
     const lanternWire = this.createFestivalLanternArch();
     lanternWire.position.set(0, 0, 0);
     seg.add(lanternWire);
@@ -229,7 +225,6 @@ export class EnvironmentManager {
 
   private createCampusTree(): THREE.Group {
     const tree = new THREE.Group();
-    // Trunk
     const trunkGeo = new THREE.CylinderGeometry(0.25, 0.35, 2.5, 6);
     const trunkMat = new THREE.MeshStandardMaterial({ color: COLORS.treeTrunk, roughness: 0.9 });
     const trunk = new THREE.Mesh(trunkGeo, trunkMat);
@@ -237,10 +232,9 @@ export class EnvironmentManager {
     trunk.castShadow = true;
     tree.add(trunk);
 
-    // Leaves crown (Low-poly cone/dodecahedron)
     const leavesGeo = new THREE.DodecahedronGeometry(1.6, 1);
     const leavesMat = new THREE.MeshStandardMaterial({
-      color: Math.random() > 0.3 ? COLORS.treeLeaves : 0x8B3A2B, // Green or Gulmohar red
+      color: Math.random() > 0.3 ? COLORS.treeLeaves : 0x8B3A2B,
       roughness: 0.8
     });
     const leaves = new THREE.Mesh(leavesGeo, leavesMat);
@@ -267,9 +261,8 @@ export class EnvironmentManager {
     bMesh.castShadow = true;
     building.add(bMesh);
 
-    // Window bands
     const winGeo = new THREE.PlaneGeometry(w - 2, 0.8);
-    const winMat = new THREE.MeshBasicMaterial({ color: 0xFDE68A }); // Warm interior light
+    const winMat = new THREE.MeshBasicMaterial({ color: 0xFDE68A });
     for (let y = 3; y < h - 2; y += 3) {
       const winMesh = new THREE.Mesh(winGeo, winMat);
       winMesh.position.set(0, y, d / 2 + 0.05);
@@ -308,7 +301,6 @@ export class EnvironmentManager {
     barMid.position.y = 0.5;
     railing.add(barMid);
 
-    // Vertical posts
     for (let z = -this.segmentLength / 2; z < this.segmentLength / 2; z += 4) {
       const postGeo = new THREE.CylinderGeometry(0.08, 0.08, 1.1, 6);
       const post = new THREE.Mesh(postGeo, barMat);
@@ -347,7 +339,6 @@ export class EnvironmentManager {
     base.position.y = h / 2;
     shop.add(base);
 
-    // Striped Awning canopy extending towards road
     const awningGeo = new THREE.BoxGeometry(2.8, 0.2, 8);
     const awningMat = new THREE.MeshStandardMaterial({
       color: Math.random() > 0.5 ? COLORS.warmSaffron : COLORS.coralAccent,
@@ -358,7 +349,6 @@ export class EnvironmentManager {
     awning.position.set(side * -2.8, 3.6, 0);
     shop.add(awning);
 
-    // Shop Signboard
     const signGeo = new THREE.BoxGeometry(0.2, 0.8, 6);
     const signMat = new THREE.MeshBasicMaterial({ color: 0xFEF08A });
     const sign = new THREE.Mesh(signGeo, signMat);
@@ -377,7 +367,6 @@ export class EnvironmentManager {
     bMesh.position.y = h / 2;
     tower.add(bMesh);
 
-    // Glowing Neon window grid strips
     const gridGeo = new THREE.PlaneGeometry(8, h - 4);
     const gridMat = new THREE.MeshBasicMaterial({
       color: Math.random() > 0.5 ? COLORS.electricCyan : COLORS.vividViolet
@@ -391,7 +380,6 @@ export class EnvironmentManager {
 
   private createFestivalLanternArch(): THREE.Group {
     const arch = new THREE.Group();
-    // Hanging fairy light cable across road
     const cableGeo = new THREE.CylinderGeometry(0.03, 0.03, 16, 6);
     const cableMat = new THREE.MeshBasicMaterial({ color: 0xFDE047 });
     const cable = new THREE.Mesh(cableGeo, cableMat);
@@ -399,7 +387,6 @@ export class EnvironmentManager {
     cable.position.set(0, 6.2, 0);
     arch.add(cable);
 
-    // Colorful hanging paper lanterns
     const colors = [COLORS.warmSaffron, COLORS.coralAccent, COLORS.electricCyan, 0xF43F5E];
     for (let x = -5; x <= 5; x += 2.5) {
       const lanternGeo = new THREE.OctahedronGeometry(0.35);
@@ -413,25 +400,41 @@ export class EnvironmentManager {
     return arch;
   }
 
-  // ================= UPDATE & ZONE TRANSITIONS =================
+  /**
+   * Recursively disposes all geometries and materials of an Object3D hierarchy
+   * to prevent GPU memory leaks during endless recycling.
+   */
+  private disposeHierarchy(obj: THREE.Object3D): void {
+    obj.traverse((child) => {
+      const mesh = child as THREE.Mesh;
+      if (mesh.isMesh) {
+        if (mesh.geometry) {
+          mesh.geometry.dispose();
+        }
+        if (mesh.material) {
+          if (Array.isArray(mesh.material)) {
+            mesh.material.forEach((m) => m.dispose());
+          } else {
+            mesh.material.dispose();
+          }
+        }
+      }
+    });
+  }
+
+  // ================= STAGE PROGRESSION & UPDATE =================
+
+  public getStageInfo(totalDistanceMeters: number): StageInfo {
+    return getStageInfo(totalDistanceMeters);
+  }
 
   public update(playerSpeed: number, dt: number, totalDistanceMeters: number): void {
-    // 1. Move road segments backward
     const moveZ = playerSpeed * dt;
 
-    // Determine current zone based on distance
+    // Determine current zone based on distance (endless progression)
+    const stageInfo = this.getStageInfo(totalDistanceMeters);
     const prevZone = this.currentZone;
-    if (totalDistanceMeters >= GAME_CONFIG.zoneDistances.festivalNights) {
-      this.currentZone = 'FESTIVAL_NIGHTS';
-    } else if (totalDistanceMeters >= GAME_CONFIG.zoneDistances.neonCodeCity) {
-      this.currentZone = 'NEON_CODE_CITY';
-    } else if (totalDistanceMeters >= GAME_CONFIG.zoneDistances.marketRush) {
-      this.currentZone = 'MARKET_RUSH';
-    } else if (totalDistanceMeters >= GAME_CONFIG.zoneDistances.bhopalLakefront) {
-      this.currentZone = 'BHOPAL_LAKEFRONT';
-    } else {
-      this.currentZone = 'CAMPUS_MORNING';
-    }
+    this.currentZone = stageInfo.zone;
 
     // Apply lighting and fog color transitions if zone changed
     if (prevZone !== this.currentZone) {
@@ -443,7 +446,6 @@ export class EnvironmentManager {
       seg.group.position.z += moveZ;
 
       if (seg.group.position.z > 30) {
-        // Find front-most segment z
         let minZ = 0;
         for (const s of this.roadSegments) {
           if (s.group.position.z < minZ) minZ = s.group.position.z;
@@ -452,10 +454,11 @@ export class EnvironmentManager {
         // Reposition segment ahead
         seg.group.position.z = minZ - this.segmentLength;
 
-        // Re-populate props with current zone theme!
-        // Remove existing scenery children (keep first 2 children: road and curb)
+        // Cleanly dispose and remove existing scenery children (children 0,1,2,3 are road/lines/curbs)
         while (seg.group.children.length > 3) {
-          seg.group.remove(seg.group.children[seg.group.children.length - 1]);
+          const child = seg.group.children[seg.group.children.length - 1];
+          this.disposeHierarchy(child);
+          seg.group.remove(child);
         }
         this.populateScenery(seg.group, this.currentZone);
       }
@@ -470,7 +473,7 @@ export class EnvironmentManager {
         break;
       case 'BHOPAL_LAKEFRONT':
         this.renderer.setAtmosphereColors(0x1B1633, 0.008, 1.1);
-        this.renderer.dirLight.color.setHex(0xFFD8A8); // Golden hour
+        this.renderer.dirLight.color.setHex(0xFFD8A8);
         break;
       case 'MARKET_RUSH':
         this.renderer.setAtmosphereColors(0x181A2B, 0.010, 1.2);
@@ -494,9 +497,24 @@ export class EnvironmentManager {
       const seg = this.roadSegments[i];
       seg.group.position.z = -i * this.segmentLength;
       while (seg.group.children.length > 3) {
-        seg.group.remove(seg.group.children[seg.group.children.length - 1]);
+        const child = seg.group.children[seg.group.children.length - 1];
+        this.disposeHierarchy(child);
+        seg.group.remove(child);
       }
       this.populateScenery(seg.group, 'CAMPUS_MORNING');
     }
+  }
+
+  public dispose(): void {
+    for (const seg of this.roadSegments) {
+      this.disposeHierarchy(seg.group);
+      this.scene.remove(seg.group);
+    }
+    this.roadSegments = [];
+    this.roadMaterial.dispose();
+    this.curbMaterial.dispose();
+    this.grassMaterial.dispose();
+    this.waterMaterial.dispose();
+    this.lineMaterial.dispose();
   }
 }

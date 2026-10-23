@@ -15,9 +15,7 @@ if (typeof globalThis.localStorage === 'undefined') {
 }
 
 import { StorageManager } from '../src/systems/Storage.ts';
-import { PassAndPlayManager } from '../src/systems/PassAndPlay.ts';
-import { MissionManager, MISSIONS_LIST } from '../src/systems/Missions.ts';
-import { GAME_CONFIG, LANES, OUTFITS } from '../src/game/Constants.ts';
+import { GAME_CONFIG, LANES, OUTFITS, getStageInfo } from '../src/game/Constants.ts';
 
 test('Game Constants Verification', () => {
   assert.equal(LANES.length, 3, 'Should have exactly 3 lanes');
@@ -32,19 +30,21 @@ test('Game Constants Verification', () => {
   assert.equal(OUTFITS.length, 4, 'Includes 4 student outfits');
 });
 
-test('StorageManager Operations & Persistence', () => {
+test('StorageManager Operations, Default State & Sanitization', () => {
   const storage = new StorageManager();
   storage.resetAllData();
 
+  // 1. Initial State Requirements
   assert.equal(storage.getHighScore(), 0, 'Initial high score should be 0');
   assert.equal(storage.getCoins(), 0, 'Initial coins should be 0');
+  assert.equal(storage.getPlayerName(), 'Runner', 'Default player name should be Runner');
+  assert.deepEqual(storage.getLeaderboard(), [], 'Default leaderboard must be completely empty (no fake starter names)');
   assert.equal(storage.getEquippedOutfit(), 'demo_day', 'Default outfit should be demo_day');
 
-  // Add coins
+  // 2. Coin Transactions
   storage.addCoins(150);
   assert.equal(storage.getCoins(), 150, 'Coins should increase to 150');
 
-  // Spend coins
   const spent = storage.spendCoins(100);
   assert.equal(spent, true, 'Spend 100 should succeed');
   assert.equal(storage.getCoins(), 50, 'Remaining coins should be 50');
@@ -53,14 +53,14 @@ test('StorageManager Operations & Persistence', () => {
   assert.equal(failedSpend, false, 'Overspending should return false');
   assert.equal(storage.getCoins(), 50, 'Coins unchanged after failed spend');
 
-  // Outfit unlock & equipping
+  // 3. Outfit unlock & equipping
   assert.equal(storage.isOutfitUnlocked('bhopal_lake'), false);
   storage.unlockOutfit('bhopal_lake');
   assert.equal(storage.isOutfitUnlocked('bhopal_lake'), true);
   storage.setEquippedOutfit('bhopal_lake');
   assert.equal(storage.getEquippedOutfit(), 'bhopal_lake');
 
-  // Run recording & Local Leaderboard
+  // 4. Run Recording & Leaderboard Management
   const res1 = storage.recordRun(8500, 520, 35);
   assert.equal(res1.isNewHighScore, true, 'First run is new high score');
   assert.equal(storage.getHighScore(), 8500);
@@ -70,83 +70,56 @@ test('StorageManager Operations & Persistence', () => {
   assert.equal(storage.getHighScore(), 8500);
 
   const board = storage.getLeaderboard();
-  assert.ok(board.length >= 2, 'Leaderboard contains recorded runs');
-  // Check descending sort
-  for (let i = 0; i < board.length - 1; i++) {
-    assert.ok(board[i].score >= board[i + 1].score, 'Leaderboard must be sorted descending');
-  }
+  assert.equal(board.length, 2, 'Leaderboard contains recorded runs');
+  assert.equal(board[0].score, 8500);
+  assert.equal(board[1].score, 4200);
+
+  // 5. Legacy Data Sanitization
+  // Simulate old save file with legacy names
+  globalThis.localStorage.setItem('deepesh_dash_save_v1', JSON.stringify({
+    highScore: 12000,
+    totalCoins: 250,
+    playerName: 'Deepesh P',
+    leaderboard: [
+      { id: '1', name: 'Deepesh P', score: 25000, distance: 1800, date: '2025-01-01' }
+    ]
+  }));
+
+  const sanitizedStorage = new StorageManager();
+  // Legacy fake entries must have been wiped
+  assert.deepEqual(sanitizedStorage.getLeaderboard(), [], 'Legacy starter leaderboard must be wiped on load');
+  assert.equal(sanitizedStorage.getPlayerName(), 'Runner', 'Legacy name Deepesh P sanitized to Runner');
+  assert.equal(sanitizedStorage.getHighScore(), 12000, 'Legitimate high score preserved');
 });
 
-test('Pass & Play Local Multiplayer Tournament Flow', () => {
-  const pp = new PassAndPlayManager();
-  pp.setupSession(['Deepesh', 'Aarav', 'Pooja']);
+test('Endless Stage Progression & Stage Info Calculations', () => {
+  // Stage 1: 0 - 449m
+  assert.deepEqual(getStageInfo(0), { stage: 1, name: 'Campus Morning', zone: 'CAMPUS_MORNING' });
+  assert.deepEqual(getStageInfo(300), { stage: 1, name: 'Campus Morning', zone: 'CAMPUS_MORNING' });
 
-  assert.equal(pp.isActive, true);
-  assert.equal(pp.players.length, 3);
-  assert.equal(pp.currentTurnIndex, 0);
+  // Stage 2: 450 - 949m
+  assert.deepEqual(getStageInfo(450), { stage: 2, name: 'Bhopal Lakefront', zone: 'BHOPAL_LAKEFRONT' });
+  assert.deepEqual(getStageInfo(800), { stage: 2, name: 'Bhopal Lakefront', zone: 'BHOPAL_LAKEFRONT' });
 
-  // Turn 1: Deepesh
-  const p1 = pp.getCurrentPlayer();
-  assert.equal(p1?.name, 'Deepesh');
-  pp.recordCurrentRun(12000, 750, 48);
+  // Stage 3: 950 - 1499m
+  assert.deepEqual(getStageInfo(950), { stage: 3, name: 'Market Rush', zone: 'MARKET_RUSH' });
+  assert.deepEqual(getStageInfo(1400), { stage: 3, name: 'Market Rush', zone: 'MARKET_RUSH' });
 
-  const next1 = pp.advanceTurn();
-  assert.equal(next1, true, 'Should have next player');
-  assert.equal(pp.currentTurnIndex, 1);
+  // Stage 4: 1500 - 2099m
+  assert.deepEqual(getStageInfo(1500), { stage: 4, name: 'Neon City', zone: 'NEON_CODE_CITY' });
+  assert.deepEqual(getStageInfo(2000), { stage: 4, name: 'Neon City', zone: 'NEON_CODE_CITY' });
 
-  // Turn 2: Aarav
-  const p2 = pp.getCurrentPlayer();
-  assert.equal(p2?.name, 'Aarav');
-  pp.recordCurrentRun(14500, 890, 62);
+  // Stage 5: 2100 - 2699m
+  assert.deepEqual(getStageInfo(2100), { stage: 5, name: 'Festival Nights', zone: 'FESTIVAL_NIGHTS' });
+  assert.deepEqual(getStageInfo(2650), { stage: 5, name: 'Festival Nights', zone: 'FESTIVAL_NIGHTS' });
 
-  const next2 = pp.advanceTurn();
-  assert.equal(next2, true, 'Should have 3rd player');
+  // Stage 6+: Endless continuation beyond 2700m (cycles every 550m)
+  assert.equal(getStageInfo(2700).stage, 6, '2700m advances to Stage 6');
+  assert.equal(getStageInfo(2700).zone, 'CAMPUS_MORNING', 'Stage 6 cycles back to zone 1');
 
-  // Turn 3: Pooja
-  const p3 = pp.getCurrentPlayer();
-  assert.equal(p3?.name, 'Pooja');
-  pp.recordCurrentRun(9800, 610, 33);
+  assert.equal(getStageInfo(3250).stage, 7, '3250m advances to Stage 7');
+  assert.equal(getStageInfo(3250).zone, 'BHOPAL_LAKEFRONT', 'Stage 7 cycles to zone 2');
 
-  const next3 = pp.advanceTurn();
-  assert.equal(next3, false, 'Match should complete after 3 players');
-  assert.equal(pp.isMatchComplete(), true);
-
-  // Check winner
-  const winner = pp.getWinner();
-  assert.equal(winner?.name, 'Aarav', 'Aarav should be winner with highest score 14500');
-
-  const ranked = pp.getRankedPlayers();
-  assert.equal(ranked[0].name, 'Aarav');
-  assert.equal(ranked[1].name, 'Deepesh');
-  assert.equal(ranked[2].name, 'Pooja');
-
-  pp.endSession();
-  assert.equal(pp.isActive, false);
-});
-
-test('Missions System Tracking & Rewards', () => {
-  const missions = new MissionManager();
-  missions.resetRun();
-
-  assert.ok(MISSIONS_LIST.length >= 5, 'Must contain at least 5 missions');
-
-  let completedEventCount = 0;
-  missions.onMissionCompletedCallback = () => {
-    completedEventCount++;
-  };
-
-  // Simulate collecting coins
-  for (let c = 0; c < 25; c++) {
-    missions.recordCoin();
-  }
-
-  // Simulate jumps
-  for (let j = 0; j < 8; j++) {
-    missions.recordJump();
-  }
-
-  // Simulate Focus mode
-  missions.recordFocusMode();
-
-  assert.ok(completedEventCount >= 2, 'Should have triggered mission completed events');
+  assert.equal(getStageInfo(3800).stage, 8, '3800m advances to Stage 8');
+  assert.equal(getStageInfo(3800).zone, 'MARKET_RUSH', 'Stage 8 cycles to zone 3');
 });

@@ -1,5 +1,5 @@
 /**
- * Deepesh Dash: Campus Rush - Local Data & State Persistence
+ * Campus Rush - Local Data & State Persistence
  */
 
 export interface LeaderboardEntry {
@@ -26,29 +26,29 @@ export interface PlayerSaveData {
 
 const STORAGE_KEY = 'deepesh_dash_save_v1';
 
-const DEFAULT_DATA: PlayerSaveData = {
-  highScore: 0,
-  maxDistance: 0,
-  byteCoins: 0,
-  equippedOutfit: 'demo_day',
-  unlockedOutfits: ['demo_day'],
-  leaderboard: [
-    { id: '1', name: 'Deepesh P', score: 12500, distance: 820, coins: 64, date: 'Campus Record' },
-    { id: '2', name: 'Aarav K', score: 9200, distance: 640, coins: 45, date: 'Demo Day' },
-    { id: '3', name: 'Pooja S', score: 7100, distance: 510, coins: 32, date: 'Lake Run' },
-    { id: '4', name: 'Vikram M', score: 5400, distance: 410, coins: 28, date: 'Sprint' },
-    { id: '5', name: 'Ananya R', score: 3800, distance: 300, coins: 18, date: 'First Run' }
-  ],
-  completedMissions: [],
-  missionProgress: {},
-  touchControls: false,
-  playerName: 'Deepesh'
-};
+// Known legacy seeded entries to sanitize from existing localStorage
+const FAKE_STARTER_NAMES = new Set(['Deepesh P', 'Aarav K', 'Pooja S', 'Vikram M', 'Ananya R']);
+
+export function createDefaultData(): PlayerSaveData {
+  return {
+    highScore: 0,
+    maxDistance: 0,
+    byteCoins: 0,
+    equippedOutfit: 'demo_day',
+    unlockedOutfits: ['demo_day'],
+    leaderboard: [],
+    completedMissions: [],
+    missionProgress: {},
+    touchControls: false,
+    playerName: 'Runner'
+  };
+}
 
 export class StorageManager {
-  private data: PlayerSaveData = { ...DEFAULT_DATA };
+  private data: PlayerSaveData;
 
   constructor() {
+    this.data = createDefaultData();
     this.load();
   }
 
@@ -58,22 +58,42 @@ export class StorageManager {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
           const parsed = JSON.parse(raw);
+          const defaults = createDefaultData();
+
+          // Sanitize leaderboard entries (remove any fake starter rows)
+          let cleanLeaderboard: LeaderboardEntry[] = [];
+          if (Array.isArray(parsed.leaderboard)) {
+            cleanLeaderboard = parsed.leaderboard.filter(
+              (entry: LeaderboardEntry) => entry && !FAKE_STARTER_NAMES.has(entry.name) && entry.id !== '1' && entry.id !== '2' && entry.id !== '3' && entry.id !== '4' && entry.id !== '5'
+            );
+          }
+
+          // Sanitize player name (clear any old personal-name branding defaults)
+          const isLegacyName = !parsed.playerName ||
+            FAKE_STARTER_NAMES.has(parsed.playerName) ||
+            /^deepesh/i.test(parsed.playerName);
+
+          const cleanPlayerName = !isLegacyName
+            ? String(parsed.playerName).trim().slice(0, 14) || 'Runner'
+            : 'Runner';
+
           this.data = {
-            ...DEFAULT_DATA,
+            ...defaults,
             ...parsed,
-            unlockedOutfits: Array.isArray(parsed.unlockedOutfits) ? parsed.unlockedOutfits : ['demo_day'],
-            leaderboard: Array.isArray(parsed.leaderboard) ? parsed.leaderboard : DEFAULT_DATA.leaderboard,
+            unlockedOutfits: Array.isArray(parsed.unlockedOutfits) ? parsed.unlockedOutfits : defaults.unlockedOutfits,
+            leaderboard: cleanLeaderboard,
             completedMissions: Array.isArray(parsed.completedMissions) ? parsed.completedMissions : [],
-            missionProgress: typeof parsed.missionProgress === 'object' && parsed.missionProgress ? parsed.missionProgress : {}
+            missionProgress: typeof parsed.missionProgress === 'object' && parsed.missionProgress ? parsed.missionProgress : {},
+            playerName: cleanPlayerName
           };
           return this.data;
         }
       }
-      this.data = { ...DEFAULT_DATA };
+      this.data = createDefaultData();
       this.save();
     } catch (e) {
       console.warn('Could not read localStorage, using defaults:', e);
-      this.data = { ...DEFAULT_DATA };
+      this.data = createDefaultData();
     }
     return this.data;
   }
@@ -163,7 +183,6 @@ export class StorageManager {
 
     this.data.byteCoins += coins;
 
-    // Add to leaderboard
     const newEntry: LeaderboardEntry = {
       id: Date.now().toString(),
       name: this.getPlayerName(),
@@ -175,7 +194,7 @@ export class StorageManager {
 
     this.data.leaderboard.push(newEntry);
     this.data.leaderboard.sort((a, b) => b.score - a.score);
-    this.data.leaderboard = this.data.leaderboard.slice(0, 10); // Keep top 10
+    this.data.leaderboard = this.data.leaderboard.slice(0, 10);
 
     const rank = this.data.leaderboard.findIndex((entry) => entry.id === newEntry.id) + 1;
 
@@ -217,7 +236,7 @@ export class StorageManager {
   }
 
   public resetAllData(): void {
-    this.data = { ...DEFAULT_DATA };
+    this.data = createDefaultData();
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem('dd_music_vol');

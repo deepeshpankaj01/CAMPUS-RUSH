@@ -117,7 +117,7 @@ server.listen(PORT, async () => {
       expression: 'document.title'
     });
     console.log(`[Offline Verify] Page Title from Cache: "${titleRes.result.value}"`);
-    if (titleRes.result.value !== 'Deepesh Dash: Campus Rush') {
+    if (titleRes.result.value !== 'Campus Rush') {
       throw new Error(`Failed to load page title offline: ${titleRes.result.value}`);
     }
 

@@ -1,5 +1,5 @@
 /**
- * Deepesh Dash: Campus Rush - Core Constants & Balancing
+ * Campus Rush - Core Constants & Balancing
  */
 
 export const COLORS = {
@@ -22,6 +22,52 @@ export const COLORS = {
 
 export const LANES = [-3.2, 0, 3.2] as const;
 export type LaneIndex = 0 | 1 | 2;
+
+export type ZoneType = 'CAMPUS_MORNING' | 'BHOPAL_LAKEFRONT' | 'MARKET_RUSH' | 'NEON_CODE_CITY' | 'FESTIVAL_NIGHTS';
+
+export interface StageInfo {
+  stage: number;
+  name: string;
+  zone: ZoneType;
+}
+
+export const ZONE_SEQUENCE: { zone: ZoneType; name: string }[] = [
+  { zone: 'CAMPUS_MORNING', name: 'Campus Morning' },
+  { zone: 'BHOPAL_LAKEFRONT', name: 'Bhopal Lakefront' },
+  { zone: 'MARKET_RUSH', name: 'Market Rush' },
+  { zone: 'NEON_CODE_CITY', name: 'Neon City' },
+  { zone: 'FESTIVAL_NIGHTS', name: 'Festival Nights' }
+];
+
+export function getStageInfo(totalDistanceMeters: number): StageInfo {
+  const stageDistances = [0, 450, 950, 1500, 2100];
+  let stage = 1;
+
+  if (totalDistanceMeters < stageDistances[1]) {
+    stage = 1;
+  } else if (totalDistanceMeters < stageDistances[2]) {
+    stage = 2;
+  } else if (totalDistanceMeters < stageDistances[3]) {
+    stage = 3;
+  } else if (totalDistanceMeters < stageDistances[4]) {
+    stage = 4;
+  } else if (totalDistanceMeters < 2700) {
+    stage = 5;
+  } else {
+    // Endless progression beyond 2700m (each 550m adds a stage)
+    const extra = totalDistanceMeters - 2700;
+    stage = 5 + Math.floor(extra / 550) + 1;
+  }
+
+  const seqIndex = (stage - 1) % ZONE_SEQUENCE.length;
+  const { zone, name } = ZONE_SEQUENCE[seqIndex];
+
+  return {
+    stage,
+    name,
+    zone
+  };
+}
 
 export const GAME_CONFIG = {
   // Movement & Physics
@@ -81,7 +127,7 @@ export const OUTFITS: OutfitDefinition[] = [
     pantsColor: 0x0B1020,
     accentColor: 0x41E5F5,
     glowColor: 0x41E5F5,
-    description: 'The official Deepesh tech hoodie. Ready to pitch.'
+    description: 'The official campus tech hoodie. Ready to pitch.'
   },
   {
     id: 'bhopal_lake',
