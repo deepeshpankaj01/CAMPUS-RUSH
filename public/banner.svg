@@ -2,27 +2,27 @@
   <defs>
     <!-- Background Gradient -->
     <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#070A14"/>
-      <stop offset="40%" stop-color="#0F142A"/>
-      <stop offset="80%" stop-color="#1B1745"/>
-      <stop offset="100%" stop-color="#29245E"/>
+      <stop offset="0%" stop-color="#0A0F1D"/>
+      <stop offset="40%" stop-color="#0F172A"/>
+      <stop offset="80%" stop-color="#1E1B4B"/>
+      <stop offset="100%" stop-color="#2E1065"/>
     </linearGradient>
 
     <!-- Neon Accents -->
     <linearGradient id="cyanPurple" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" stop-color="#41E5F5"/>
-      <stop offset="50%" stop-color="#7865FF"/>
-      <stop offset="100%" stop-color="#FF5C7A"/>
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#F43F5E"/>
     </linearGradient>
 
     <linearGradient id="goldFire" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FFE066"/>
-      <stop offset="100%" stop-color="#FFB547"/>
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
     </linearGradient>
 
     <linearGradient id="roadGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#41E5F5" stop-opacity="0.8"/>
-      <stop offset="100%" stop-color="#7865FF" stop-opacity="0.05"/>
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#818CF8" stop-opacity="0.05"/>
     </linearGradient>
 
     <!-- Glow Filter -->
@@ -45,98 +45,83 @@
 
   <!-- Background Canvas -->
   <rect width="1200" height="460" rx="16" fill="url(#bgGrad)"/>
-  <rect x="2" y="2" width="1196" height="456" rx="14" fill="none" stroke="#41E5F5" stroke-opacity="0.25" stroke-width="2"/>
+  <rect x="2" y="2" width="1196" height="456" rx="14" fill="none" stroke="#38BDF8" stroke-opacity="0.25" stroke-width="2"/>
 
   <!-- Perspective 3D Runway Grid in Background -->
-  <g opacity="0.32">
-    <!-- Vanishing horizon -->
-    <line x1="200" y1="210" x2="1000" y2="210" stroke="#7865FF" stroke-width="2"/>
-    <!-- Lanes converging to vanishing point (600, 210) -->
-    <polygon points="560,210 640,210 880,460 320,460" fill="url(#roadGlow)" opacity="0.2"/>
-    <!-- Left edge -->
-    <line x1="560" y1="210" x2="320" y2="460" stroke="#41E5F5" stroke-width="3" filter="url(#subtleGlow)"/>
-    <!-- Lane Divider 1 -->
-    <line x1="587" y1="210" x2="507" y2="460" stroke="#FFFFFF" stroke-dasharray="14 14" stroke-width="2"/>
-    <!-- Lane Divider 2 -->
-    <line x1="613" y1="210" x2="693" y2="460" stroke="#FFFFFF" stroke-dasharray="14 14" stroke-width="2"/>
-    <!-- Right edge -->
-    <line x1="640" y1="210" x2="880" y2="460" stroke="#FF5C7A" stroke-width="3" filter="url(#subtleGlow)"/>
+  <g opacity="0.35">
+    <line x1="200" y1="210" x2="1000" y2="210" stroke="#818CF8" stroke-width="2"/>
+    <polygon points="560,210 640,210 880,460 320,460" fill="url(#roadGlow)" opacity="0.25"/>
+    <line x1="560" y1="210" x2="320" y2="460" stroke="#38BDF8" stroke-width="3" filter="url(#subtleGlow)"/>
+    <line x1="587" y1="210" x2="507" y2="460" stroke="#FFFFFF" stroke-dasharray="14 14" stroke-width="2.5"/>
+    <line x1="613" y1="210" x2="693" y2="460" stroke="#FFFFFF" stroke-dasharray="14 14" stroke-width="2.5"/>
+    <line x1="640" y1="210" x2="880" y2="460" stroke="#F43F5E" stroke-width="3" filter="url(#subtleGlow)"/>
 
-    <!-- Horizontal speed cross-lines -->
-    <line x1="480" y1="250" x2="720" y2="250" stroke="#41E5F5" stroke-opacity="0.3" stroke-width="1.5"/>
-    <line x1="430" y1="295" x2="770" y2="295" stroke="#41E5F5" stroke-opacity="0.4" stroke-width="1.5"/>
-    <line x1="375" y1="355" x2="825" y2="355" stroke="#41E5F5" stroke-opacity="0.5" stroke-width="2"/>
-    <line x1="320" y1="430" x2="880" y2="430" stroke="#41E5F5" stroke-opacity="0.7" stroke-width="2.5"/>
+    <line x1="480" y1="250" x2="720" y2="250" stroke="#38BDF8" stroke-opacity="0.3" stroke-width="1.5"/>
+    <line x1="430" y1="295" x2="770" y2="295" stroke="#38BDF8" stroke-opacity="0.4" stroke-width="1.5"/>
+    <line x1="375" y1="355" x2="825" y2="355" stroke="#38BDF8" stroke-opacity="0.5" stroke-width="2"/>
+    <line x1="320" y1="430" x2="880" y2="430" stroke="#38BDF8" stroke-opacity="0.7" stroke-width="2.5"/>
   </g>
 
   <!-- Ambient Decorative Matrix Grid & Particles -->
-  <g opacity="0.18">
-    <circle cx="120" cy="80" r="2" fill="#41E5F5"/>
-    <circle cx="240" cy="140" r="3" fill="#7865FF"/>
-    <circle cx="180" cy="280" r="2" fill="#FF5C7A"/>
-    <circle cx="1020" cy="90" r="2.5" fill="#41E5F5"/>
-    <circle cx="940" cy="160" r="2" fill="#FFE066"/>
-    <circle cx="1080" cy="270" r="3" fill="#7865FF"/>
-    <path d="M40 120 L160 120 L200 160" stroke="#41E5F5" stroke-width="1.5" fill="none"/>
-    <path d="M1160 120 L1040 120 L1000 160" stroke="#FF5C7A" stroke-width="1.5" fill="none"/>
+  <g opacity="0.22">
+    <circle cx="120" cy="80" r="2.5" fill="#38BDF8"/>
+    <circle cx="240" cy="140" r="3" fill="#818CF8"/>
+    <circle cx="180" cy="280" r="2.5" fill="#F43F5E"/>
+    <circle cx="1020" cy="90" r="3" fill="#38BDF8"/>
+    <circle cx="940" cy="160" r="2.5" fill="#FBBF24"/>
+    <circle cx="1080" cy="270" r="3.5" fill="#818CF8"/>
+    <path d="M40 120 L160 120 L200 160" stroke="#38BDF8" stroke-width="1.5" fill="none"/>
+    <path d="M1160 120 L1040 120 L1000 160" stroke="#F43F5E" stroke-width="1.5" fill="none"/>
   </g>
 
-  <!-- Monogram Logo Emblem (Left Side) -->
-  <g transform="translate(85, 90)">
-    <rect width="140" height="140" rx="32" fill="#11162B" stroke="#41E5F5" stroke-width="3" filter="url(#neonGlow)"/>
-    <!-- Stylized Running "D" -->
-    <path d="M45 35 H75 C100 35 115 52 115 70 C115 88 100 105 75 105 H45 Z" fill="none" stroke="url(#cyanPurple)" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="M64 56 L88 70 L64 84 Z" fill="url(#goldFire)"/>
-    <circle cx="104" cy="45" r="6" fill="#FFE066"/>
+  <!-- Monogram Logo Emblem (Stylized Campus Runner Shield) -->
+  <g transform="translate(85, 85)">
+    <rect width="140" height="140" rx="32" fill="#111827" stroke="#38BDF8" stroke-width="3" filter="url(#neonGlow)"/>
+    <!-- Stylized Speed Runner Wings -->
+    <path d="M40 98 L56 42 L88 42 L72 98 Z" fill="url(#cyanPurple)"/>
+    <path d="M72 98 L88 42 L106 42 L90 98 Z" fill="url(#goldFire)"/>
+    <circle cx="98" cy="38" r="7" fill="#FBBF24"/>
   </g>
 
   <!-- Header Texts -->
   <!-- Category Pill -->
   <g transform="translate(260, 82)">
-    <rect width="260" height="30" rx="15" fill="#1E2342" stroke="#41E5F5" stroke-opacity="0.5" stroke-width="1.5"/>
-    <text x="130" y="20" fill="#41E5F5" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="700" letter-spacing="2.5" text-anchor="middle">⚡ 3D ENDLESS RUNNER</text>
+    <rect width="250" height="30" rx="15" fill="#1E293B" stroke="#38BDF8" stroke-opacity="0.5" stroke-width="1.5"/>
+    <text x="125" y="20" fill="#38BDF8" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="800" letter-spacing="2.5" text-anchor="middle">⚡ 3D ARCADE RUNNER</text>
   </g>
 
   <!-- Main Title -->
-  <text x="260" y="160" fill="url(#cyanPurple)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="900" letter-spacing="3" filter="url(#subtleGlow)">CAMPUS RUSH</text>
+  <text x="260" y="165" fill="#FFFFFF" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="900" letter-spacing="3">CAMPUS</text>
+  <text x="635" y="165" fill="url(#cyanPurple)" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="64" font-weight="900" letter-spacing="4" filter="url(#subtleGlow)">RUSH</text>
 
   <!-- Tagline -->
-  <text x="262" y="202" fill="#F4F6FC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="22" font-weight="500" letter-spacing="1.5">
-    “One More Run. Beat Your Best.”
+  <text x="262" y="204" fill="#F8FAFC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="20" font-weight="600" letter-spacing="1">
+    One More Run. Beat Your Best.
   </text>
 
   <!-- Feature Pills Row -->
   <g transform="translate(85, 275)">
-    <!-- Pill 1: Three.js 3D -->
-    <rect x="0" y="0" width="195" height="42" rx="10" fill="#131A33" stroke="#41E5F5" stroke-width="1.5"/>
-    <text x="97" y="26" fill="#F4F6FC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" text-anchor="middle">🎮 Three.js WebGL 3D</text>
+    <rect x="0" y="0" width="235" height="42" rx="10" fill="#131D33" stroke="#38BDF8" stroke-width="1.5"/>
+    <text x="117" y="26" fill="#F8FAFC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" text-anchor="middle">🎮 Three.js WebGL 3D</text>
 
-    <!-- Pill 2: Procedural Synth -->
-    <rect x="210" y="0" width="205" height="42" rx="10" fill="#131A33" stroke="#7865FF" stroke-width="1.5"/>
-    <text x="312" y="26" fill="#F4F6FC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" text-anchor="middle">🎵 Procedural Web Audio</text>
+    <rect x="255" y="0" width="245" height="42" rx="10" fill="#131D33" stroke="#818CF8" stroke-width="1.5"/>
+    <text x="377" y="26" fill="#F8FAFC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" text-anchor="middle">🎵 Procedural Web Audio</text>
 
-    <!-- Pill 3: Focus Mode -->
-    <rect x="430" y="0" width="185" height="42" rx="10" fill="#131A33" stroke="#FFE066" stroke-width="1.5"/>
-    <text x="522" y="26" fill="#F4F6FC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" text-anchor="middle">💎 Focus Mode (3x)</text>
+    <rect x="520" y="0" width="220" height="42" rx="10" fill="#131D33" stroke="#FBBF24" stroke-width="1.5"/>
+    <text x="630" y="26" fill="#F8FAFC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" text-anchor="middle">💎 Focus Mode (3x)</text>
 
-    <!-- Pill 4: Pass & Play -->
-    <rect x="630" y="0" width="195" height="42" rx="10" fill="#131A33" stroke="#FF5C7A" stroke-width="1.5"/>
-    <text x="727" y="26" fill="#F4F6FC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" text-anchor="middle">👥 Pass &amp; Play (2-4P)</text>
-
-    <!-- Pill 5: 100% Offline PWA -->
-    <rect x="840" y="0" width="185" height="42" rx="10" fill="#131A33" stroke="#2B7A4B" stroke-width="1.5"/>
-    <text x="932" y="26" fill="#F4F6FC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600" text-anchor="middle">⚡ 100% Offline PWA</text>
+    <rect x="760" y="0" width="265" height="42" rx="10" fill="#131D33" stroke="#22C55E" stroke-width="1.5"/>
+    <text x="892" y="26" fill="#F8FAFC" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="700" text-anchor="middle">⚡ 100% Offline PWA Ready</text>
   </g>
 
   <!-- Lower Highlights -->
-  <g transform="translate(85, 350)">
-    <!-- Zone tags -->
-    <text x="0" y="20" fill="#8E9AB8" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="500">
-      5 THEMATIC ZONES: <tspan fill="#F4F6FC">Campus Morning</tspan> · <tspan fill="#FFE066">Bhopal Lakefront</tspan> · <tspan fill="#FF5C7A">Market Rush</tspan> · <tspan fill="#41E5F5">Neon Code City</tspan> · <tspan fill="#7865FF">Festival Nights</tspan>
+  <g transform="translate(85, 352)">
+    <text x="0" y="20" fill="#94A3B8" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600">
+      5 THEMATIC ZONES: <tspan fill="#F8FAFC">Campus Morning</tspan> · <tspan fill="#FBBF24">Lakefront</tspan> · <tspan fill="#F43F5E">Market</tspan> · <tspan fill="#38BDF8">Neon City</tspan> · <tspan fill="#818CF8">Festival</tspan>
     </text>
-    <text x="0" y="45" fill="#8E9AB8" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="500">
-      POWER-UPS: <tspan fill="#F4F6FC">🛡️ Notebook Shield</tspan> · <tspan fill="#F4F6FC">🧲 Code Magnet</tspan> · <tspan fill="#F4F6FC">🚀 Sprint Boost</tspan>
-      <tspan dx="30" fill="#41E5F5">Zero External Assets · Strict TypeScript · Instant Load</tspan>
+    <text x="0" y="45" fill="#94A3B8" font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" font-size="13" font-weight="600">
+      POWER-UPS: <tspan fill="#F8FAFC">🛡️ Notebook Shield</tspan> · <tspan fill="#F8FAFC">🧲 Code Magnet</tspan> · <tspan fill="#F8FAFC">🚀 Sprint Boost</tspan>
+      <tspan dx="40" fill="#38BDF8">Instant Load · Zero Remote Calls · Strict TypeScript</tspan>
     </text>
   </g>
 </svg>

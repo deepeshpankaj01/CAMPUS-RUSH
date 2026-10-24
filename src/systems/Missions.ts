@@ -1,5 +1,5 @@
 /**
- * Deepesh Dash: Campus Rush - Missions System
+ * Campus Rush - Missions System
  */
 import { storage } from './Storage.ts';
 import { soundManager } from '../audio/SoundSynthesizer.ts';

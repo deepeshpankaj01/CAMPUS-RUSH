@@ -1,12 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0B1020"/>
-      <stop offset="100%" stop-color="#29245E"/>
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="50%" stop-color="#1E1B4B"/>
+      <stop offset="100%" stop-color="#2E1065"/>
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#41E5F5"/>
-      <stop offset="100%" stop-color="#7865FF"/>
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="60%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#F43F5E"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
     </linearGradient>
     <filter id="glow">
       <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
@@ -17,11 +23,13 @@
     </filter>
   </defs>
   <rect width="192" height="192" rx="42" fill="url(#bg)"/>
-  <rect x="6" y="6" width="180" height="180" rx="36" fill="none" stroke="#41E5F5" stroke-width="2.5" stroke-opacity="0.4"/>
-  <path d="M52 42 H98 C128 42 146 64 146 96 C146 128 128 150 98 150 H52 Z" fill="none" stroke="url(#accent)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
-  <path d="M78 75 L112 96 L78 117 Z" fill="#FFB547"/>
-  <circle cx="140" cy="56" r="8" fill="#FFB547" filter="url(#glow)"/>
-  <line x1="28" y1="80" x2="42" y2="80" stroke="#41E5F5" stroke-width="5" stroke-linecap="round"/>
-  <line x1="22" y1="96" x2="38" y2="96" stroke="#FF5C7A" stroke-width="5" stroke-linecap="round"/>
-  <line x1="26" y1="112" x2="42" y2="112" stroke="#41E5F5" stroke-width="5" stroke-linecap="round"/>
+  <rect x="6" y="6" width="180" height="180" rx="36" fill="none" stroke="#38BDF8" stroke-width="2.5" stroke-opacity="0.4"/>
+  
+  <path d="M48 142 L75 50 L120 50 L93 142 Z" fill="url(#accent)" filter="url(#glow)"/>
+  <path d="M100 142 L126 50 L152 50 L126 142 Z" fill="url(#gold)"/>
+  <circle cx="144" cy="42" r="10" fill="#FDE047" filter="url(#glow)"/>
+  
+  <line x1="28" y1="80" x2="42" y2="80" stroke="#38BDF8" stroke-width="5" stroke-linecap="round"/>
+  <line x1="22" y1="96" x2="38" y2="96" stroke="#F43F5E" stroke-width="5" stroke-linecap="round"/>
+  <line x1="26" y1="112" x2="42" y2="112" stroke="#38BDF8" stroke-width="5" stroke-linecap="round"/>
 </svg>

@@ -1,5 +1,5 @@
 /**
- * Deepesh Dash: Campus Rush - 3D Particle Systems & Juice
+ * Campus Rush - 3D Particle Systems & Juice
  */
 import * as THREE from 'three';
 import { COLORS } from './Constants';

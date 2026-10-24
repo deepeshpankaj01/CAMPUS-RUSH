@@ -1,5 +1,5 @@
-// Campus Rush - Offline Service Worker
-const CACHE_NAME = 'campus-rush-v1.1.0';
+// CAMPUS RUSH - Offline Service Worker
+const CACHE_NAME = 'campus-rush-v2.0.0';
 
 const PRECACHE_ASSETS = [
   './',

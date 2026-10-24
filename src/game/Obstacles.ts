@@ -1,5 +1,5 @@
 /**
- * Campus Rush - Obstacles, Fair Procedural Spawning & Object Pooling
+ * Campus Rush - Obstacles & Fair Procedural Spawning
  */
 import * as THREE from 'three';
 import { COLORS, LANES, LaneIndex } from './Constants';
@@ -31,9 +31,6 @@ export class ObstacleManager {
   private scene: THREE.Scene;
   public obstacles: ObstacleInstance[] = [];
 
-  // Object pool by obstacle type to eliminate GPU & GC allocations during gameplay
-  private pool: Map<ObstacleType, ObstacleInstance[]> = new Map();
-
   // Spawn parameters
   private nextSpawnZ: number = -45;
   private minSpawnSpacing: number = 28;
@@ -43,16 +40,8 @@ export class ObstacleManager {
   }
 
   public reset(): void {
-    // Return all active obstacles to the pool
     for (const obs of this.obstacles) {
-      obs.active = false;
-      obs.group.visible = false;
-      let list = this.pool.get(obs.type);
-      if (!list) {
-        list = [];
-        this.pool.set(obs.type, list);
-      }
-      list.push(obs);
+      this.scene.remove(obs.group);
     }
     this.obstacles = [];
     this.nextSpawnZ = -45;
@@ -67,16 +56,9 @@ export class ObstacleManager {
       obs.z += moveZ;
       obs.group.position.z = obs.z;
 
-      // Recycle obstacle when passed behind player (Z > 15)
+      // Remove obstacle when passed behind player (Z > 15)
       if (obs.z > 15) {
-        obs.active = false;
-        obs.group.visible = false;
-        let list = this.pool.get(obs.type);
-        if (!list) {
-          list = [];
-          this.pool.set(obs.type, list);
-        }
-        list.push(obs);
+        this.scene.remove(obs.group);
         this.obstacles.splice(i, 1);
       }
     }
@@ -90,6 +72,7 @@ export class ObstacleManager {
       this.nextSpawnZ -= dynamicSpacing;
     }
 
+    // Adjust nextSpawnZ relative to world movement
     this.nextSpawnZ += moveZ;
   }
 
@@ -99,20 +82,22 @@ export class ObstacleManager {
     const lanesBlockedCount = roll < 0.65 ? 1 : 2;
 
     const availableLanes: LaneIndex[] = [0, 1, 2];
+    // Shuffle available lanes
     availableLanes.sort(() => Math.random() - 0.5);
 
     const chosenLanes = availableLanes.slice(0, lanesBlockedCount);
 
+    // If 2 lanes are blocked, ensure at least one is jumpable/slideable or clearly open
     for (let i = 0; i < chosenLanes.length; i++) {
       const lane = chosenLanes[i];
       const type = this.pickObstacleType(i === 1);
-      this.getOrCreateObstacle(type, lane, z);
+      this.createAndAddObstacle(type, lane, z);
     }
   }
 
   private pickObstacleType(isSecondInRow: boolean): ObstacleType {
     if (isSecondInRow) {
-      // Second obstacle in same row: guarantee jumpable or slideable so it's always fair
+      // Second obstacle in same row: guarantee jumpable or slideable so it's fair
       const fairTypes: ObstacleType[] = ['BARRICADE', 'POTHOLE', 'CONES', 'OVERHEAD_BANNER'];
       return fairTypes[Math.floor(Math.random() * fairTypes.length)];
     }
@@ -127,23 +112,6 @@ export class ObstacleManager {
       'CAMPUS_AUTO'
     ];
     return types[Math.floor(Math.random() * types.length)];
-  }
-
-  private getOrCreateObstacle(type: ObstacleType, lane: LaneIndex, z: number): void {
-    const list = this.pool.get(type);
-    if (list && list.length > 0) {
-      const obs = list.pop()!;
-      obs.lane = lane;
-      obs.z = z;
-      obs.active = true;
-      obs.group.visible = true;
-      obs.group.position.set(LANES[lane], 0, z);
-      this.obstacles.push(obs);
-      return;
-    }
-
-    // Otherwise create a new instance
-    this.createAndAddObstacle(type, lane, z);
   }
 
   private createAndAddObstacle(type: ObstacleType, lane: LaneIndex, z: number): void {
@@ -231,9 +199,10 @@ export class ObstacleManager {
 
   private buildBarricade(): THREE.Group {
     const g = new THREE.Group();
+    // Two striped crossbars
     const barGeo = new THREE.BoxGeometry(2.4, 0.22, 0.1);
-    const barMat1 = new THREE.MeshStandardMaterial({ color: 0xFACC15 });
-    const barMat2 = new THREE.MeshStandardMaterial({ color: 0x1E293B });
+    const barMat1 = new THREE.MeshStandardMaterial({ color: 0xFACC15 }); // Bright Yellow
+    const barMat2 = new THREE.MeshStandardMaterial({ color: 0x1E293B }); // Dark stripe
 
     const bar1 = new THREE.Mesh(barGeo, barMat1);
     bar1.position.y = 0.95;
@@ -244,6 +213,7 @@ export class ObstacleManager {
     bar2.position.y = 0.55;
     g.add(bar2);
 
+    // Hazard stripes
     for (let x = -0.9; x <= 0.9; x += 0.45) {
       const stripeGeo = new THREE.BoxGeometry(0.18, 0.23, 0.11);
       const stripe = new THREE.Mesh(stripeGeo, barMat2);
@@ -251,6 +221,7 @@ export class ObstacleManager {
       g.add(stripe);
     }
 
+    // Two A-frame support legs
     const legGeo = new THREE.BoxGeometry(0.15, 1.1, 0.55);
     const legMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
     const legL = new THREE.Mesh(legGeo, legMat);
@@ -266,7 +237,7 @@ export class ObstacleManager {
   private buildConstructionCones(): THREE.Group {
     const g = new THREE.Group();
     const coneGeo = new THREE.ConeGeometry(0.3, 0.8, 8);
-    const coneMat = new THREE.MeshStandardMaterial({ color: 0xEA580C });
+    const coneMat = new THREE.MeshStandardMaterial({ color: 0xEA580C }); // Safety Orange
     const bandMat = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
 
     const positions = [
@@ -281,6 +252,7 @@ export class ObstacleManager {
       cone.castShadow = true;
       g.add(cone);
 
+      // Reflective white band
       const bandGeo = new THREE.CylinderGeometry(0.2, 0.24, 0.16, 8);
       const band = new THREE.Mesh(bandGeo, bandMat);
       band.position.set(cx, cy + 0.45, cz);
@@ -292,12 +264,14 @@ export class ObstacleManager {
 
   private buildPothole(): THREE.Group {
     const g = new THREE.Group();
+    // Cracked dark asphalt cutout
     const holeGeo = new THREE.BoxGeometry(2.2, 0.08, 2.0);
     const holeMat = new THREE.MeshStandardMaterial({ color: 0x070A14, roughness: 0.95 });
     const hole = new THREE.Mesh(holeGeo, holeMat);
     hole.position.y = 0.04;
     g.add(hole);
 
+    // Hazard caution flag marker on edge
     const poleGeo = new THREE.CylinderGeometry(0.04, 0.04, 1.0, 6);
     const poleMat = new THREE.MeshStandardMaterial({ color: 0xCBD5E1 });
     const pole = new THREE.Mesh(poleGeo, poleMat);
@@ -315,6 +289,7 @@ export class ObstacleManager {
 
   private buildCampusCart(): THREE.Group {
     const g = new THREE.Group();
+    // Metal Trolley
     const bodyGeo = new THREE.BoxGeometry(2.1, 0.9, 1.6);
     const bodyMat = new THREE.MeshStandardMaterial({ color: 0x334155, metalness: 0.5, roughness: 0.5 });
     const body = new THREE.Mesh(bodyGeo, bodyMat);
@@ -322,6 +297,7 @@ export class ObstacleManager {
     body.castShadow = true;
     g.add(body);
 
+    // Electronic project boxes and monitor on top
     const boxGeo = new THREE.BoxGeometry(1.2, 0.6, 0.9);
     const boxMat = new THREE.MeshStandardMaterial({ color: 0x94A3B8 });
     const box = new THREE.Mesh(boxGeo, boxMat);
@@ -334,6 +310,7 @@ export class ObstacleManager {
     screen.position.set(0.5, 1.35, 0.2);
     g.add(screen);
 
+    // Trolley wheels
     const wheelGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.1, 8);
     const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111827 });
     for (const wx of [-0.85, 0.85]) {
@@ -350,6 +327,7 @@ export class ObstacleManager {
 
   private buildChaiTapri(): THREE.Group {
     const g = new THREE.Group();
+    // Wooden stall counter
     const stallGeo = new THREE.BoxGeometry(2.3, 1.0, 1.5);
     const stallMat = new THREE.MeshStandardMaterial({ color: 0x78350F, roughness: 0.8 });
     const stall = new THREE.Mesh(stallGeo, stallMat);
@@ -357,6 +335,7 @@ export class ObstacleManager {
     stall.castShadow = true;
     g.add(stall);
 
+    // Slanted tin roof
     const roofGeo = new THREE.BoxGeometry(2.6, 0.12, 1.8);
     const roofMat = new THREE.MeshStandardMaterial({ color: 0x0284C7, metalness: 0.4 });
     const roof = new THREE.Mesh(roofGeo, roofMat);
@@ -364,6 +343,7 @@ export class ObstacleManager {
     roof.rotation.x = 0.1;
     g.add(roof);
 
+    // Roof poles
     const poleMat = new THREE.MeshStandardMaterial({ color: 0x475569 });
     for (const px of [-1.1, 1.1]) {
       for (const pz of [-0.7, 0.7]) {
@@ -374,6 +354,7 @@ export class ObstacleManager {
       }
     }
 
+    // Chai kettle / samovar on counter
     const kettleGeo = new THREE.CylinderGeometry(0.2, 0.25, 0.4, 8);
     const kettleMat = new THREE.MeshStandardMaterial({ color: 0xE2E8F0, metalness: 0.8 });
     const kettle = new THREE.Mesh(kettleGeo, kettleMat);
@@ -385,6 +366,7 @@ export class ObstacleManager {
 
   private buildOverheadBanner(): THREE.Group {
     const g = new THREE.Group();
+    // Two side arch pillars
     const pillarMat = new THREE.MeshStandardMaterial({ color: COLORS.deepIndigo });
     for (const px of [-1.45, 1.45]) {
       const pillarGeo = new THREE.BoxGeometry(0.25, 3.2, 0.25);
@@ -393,6 +375,7 @@ export class ObstacleManager {
       g.add(pillar);
     }
 
+    // Overhead Campus Banner (Height y=1.35 to 2.3 - must slide underneath!)
     const bannerGeo = new THREE.BoxGeometry(2.8, 0.95, 0.12);
     const bannerMat = new THREE.MeshStandardMaterial({
       color: COLORS.vividViolet,
@@ -404,12 +387,14 @@ export class ObstacleManager {
     banner.castShadow = true;
     g.add(banner);
 
+    // Glowing Banner Text Accent (Simulated "DEMO DAY ->")
     const textStripeGeo = new THREE.PlaneGeometry(2.4, 0.35);
     const textStripeMat = new THREE.MeshBasicMaterial({ color: COLORS.electricCyan });
     const textStripe = new THREE.Mesh(textStripeGeo, textStripeMat);
     textStripe.position.set(0, 1.85, 0.07);
     g.add(textStripe);
 
+    // Slide indicator icon/arrow pointing DOWN
     const downArrowGeo = new THREE.ConeGeometry(0.18, 0.3, 4);
     const downArrowMat = new THREE.MeshBasicMaterial({ color: COLORS.warmSaffron });
     const downArrow = new THREE.Mesh(downArrowGeo, downArrowMat);
@@ -422,31 +407,36 @@ export class ObstacleManager {
 
   private buildCampusAuto(): THREE.Group {
     const g = new THREE.Group();
+    // Iconic green lower body
     const bodyGeo = new THREE.BoxGeometry(2.0, 0.9, 2.5);
-    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x16A34A, roughness: 0.5 });
+    const bodyMat = new THREE.MeshStandardMaterial({ color: 0x16A34A, roughness: 0.5 }); // Indian Auto Green
     const body = new THREE.Mesh(bodyGeo, bodyMat);
     body.position.y = 0.65;
     body.castShadow = true;
     g.add(body);
 
+    // Iconic yellow canopy roof
     const roofGeo = new THREE.BoxGeometry(1.9, 0.65, 2.3);
-    const roofMat = new THREE.MeshStandardMaterial({ color: 0xEAB308, roughness: 0.5 });
+    const roofMat = new THREE.MeshStandardMaterial({ color: 0xEAB308, roughness: 0.5 }); // Indian Auto Yellow
     const roof = new THREE.Mesh(roofGeo, roofMat);
     roof.position.set(0, 1.35, 0.1);
     g.add(roof);
 
+    // Front windshield
     const glassGeo = new THREE.PlaneGeometry(1.6, 0.5);
     const glassMat = new THREE.MeshStandardMaterial({ color: 0x0284C7, roughness: 0.1, transparent: true, opacity: 0.6 });
     const glass = new THREE.Mesh(glassGeo, glassMat);
     glass.position.set(0, 1.3, -1.06);
     g.add(glass);
 
+    // Headlight
     const lightGeo = new THREE.CircleGeometry(0.16, 8);
     const lightMat = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
     const light = new THREE.Mesh(lightGeo, lightMat);
     light.position.set(0, 0.65, -1.26);
     g.add(light);
 
+    // Wheels
     const wMat = new THREE.MeshStandardMaterial({ color: 0x1F2937 });
     const wGeo = new THREE.CylinderGeometry(0.24, 0.24, 0.14, 8);
     for (const [wx, wz] of [[-0.85, 0.7], [0.85, 0.7], [0, -0.9]]) {
@@ -459,6 +449,7 @@ export class ObstacleManager {
     return g;
   }
 
+  // Collision detection helper
   public checkCollisions(playerBox: THREE.Box3, playerIsSliding: boolean): ObstacleInstance | null {
     for (const obs of this.obstacles) {
       if (!obs.active) continue;
@@ -467,7 +458,9 @@ export class ObstacleManager {
       const halfW = obs.width / 2;
       const halfD = obs.depth / 2;
 
+      // Special handling for OVERHEAD_BANNER
       if (obs.requiresSlide) {
+        // If player is sliding, their hitbox height is < 0.8, so they pass safely!
         if (playerIsSliding) {
           continue;
         }
@@ -483,30 +476,5 @@ export class ObstacleManager {
       }
     }
     return null;
-  }
-
-  public dispose(): void {
-    const allInstances: ObstacleInstance[] = [...this.obstacles];
-    for (const list of this.pool.values()) {
-      allInstances.push(...list);
-    }
-    for (const obs of allInstances) {
-      this.scene.remove(obs.group);
-      obs.group.traverse((child) => {
-        const mesh = child as THREE.Mesh;
-        if (mesh.isMesh) {
-          if (mesh.geometry) mesh.geometry.dispose();
-          if (mesh.material) {
-            if (Array.isArray(mesh.material)) {
-              mesh.material.forEach((m) => m.dispose());
-            } else {
-              mesh.material.dispose();
-            }
-          }
-        }
-      });
-    }
-    this.obstacles = [];
-    this.pool.clear();
   }
 }

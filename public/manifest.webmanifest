@@ -1,12 +1,12 @@
 {
   "name": "Campus Rush",
   "short_name": "CampusRush",
-  "description": "Campus Rush - 3D Arcade Endless Runner. One More Run. Beat Your Best.",
+  "description": "Fast-paced 3D arcade endless runner. One More Run. Beat Your Best.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#0B1020",
-  "theme_color": "#0B1020",
+  "background_color": "#0F172A",
+  "theme_color": "#0F172A",
   "orientation": "any",
   "icons": [
     {

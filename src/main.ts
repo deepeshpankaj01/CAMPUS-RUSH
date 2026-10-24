@@ -1,5 +1,5 @@
 /**
- * Campus Rush - Main Application Entrypoint
+ * CAMPUS RUSH - Main Application Entrypoint
  */
 import './styles/main.css';
 import { GameEngine } from './game/GameEngine';
@@ -25,8 +25,8 @@ window.addEventListener('DOMContentLoaded', () => {
     window.removeEventListener('pointerdown', unlockAudio);
     window.removeEventListener('keydown', unlockAudio);
   };
-  window.addEventListener('pointerdown', unlockAudio);
-  window.addEventListener('keydown', unlockAudio);
+  window.addEventListener('pointerdown', unlockAudio, { passive: true });
+  window.addEventListener('keydown', unlockAudio, { passive: true });
 
   // 3. Desktop Keyboard Controls
   window.addEventListener('keydown', (e) => {
@@ -78,29 +78,30 @@ window.addEventListener('DOMContentLoaded', () => {
   let touchStartX = 0;
   let touchStartY = 0;
   let touchStartTime = 0;
-  let touchStartedOnInteractive = false;
+  let touchStartedOnUI = false;
 
   window.addEventListener(
     'touchstart',
     (e) => {
-      const target = e.target as HTMLElement | null;
-      touchStartedOnInteractive = !!(target && target.closest('button, .btn-hud-icon, .btn-primary-action, .btn-secondary-action'));
-
       if (e.touches.length === 1) {
+        const target = e.target as HTMLElement | null;
+        touchStartedOnUI = Boolean(
+          target && (target.closest('button') || target.closest('.interactive') || target.closest('.modal-card'))
+        );
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchStartTime = performance.now();
       }
     },
-    { passive: false }
+    { passive: true }
   );
 
   window.addEventListener(
     'touchmove',
     (e) => {
       // Prevent browser pull-to-refresh and page scroll while playing
-      if (engine.state === 'PLAYING') {
-        e.preventDefault();
+      if (engine.state === 'PLAYING' && !touchStartedOnUI) {
+        if (e.cancelable) e.preventDefault();
       }
     },
     { passive: false }
@@ -109,7 +110,7 @@ window.addEventListener('DOMContentLoaded', () => {
   window.addEventListener(
     'touchend',
     (e) => {
-      if (engine.state !== 'PLAYING' || touchStartedOnInteractive) return;
+      if (engine.state !== 'PLAYING' || touchStartedOnUI) return;
 
       const touchEndX = e.changedTouches[0].clientX;
       const touchEndY = e.changedTouches[0].clientY;
@@ -120,8 +121,8 @@ window.addEventListener('DOMContentLoaded', () => {
       const absX = Math.abs(dx);
       const absY = Math.abs(dy);
 
-      // Swipe threshold: at least 28px within 500ms
-      if (dt < 500 && (absX > 28 || absY > 28)) {
+      // Swipe threshold: at least 28px within 600ms
+      if (dt < 600 && (absX > 28 || absY > 28)) {
         if (absX > absY) {
           // Horizontal swipe
           if (dx < 0) {
@@ -139,17 +140,10 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       }
     },
-    { passive: false }
+    { passive: true }
   );
 
-  // 5. Visibility Change (Auto-pause when switching apps/tabs)
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && engine.state === 'PLAYING') {
-      ui.openPauseModal();
-    }
-  });
-
-  // 6. Register Offline PWA Service Worker
+  // 5. Register Offline PWA Service Worker
   if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
     navigator.serviceWorker
       .register('./sw.js')

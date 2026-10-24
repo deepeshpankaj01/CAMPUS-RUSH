@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./public/banner.svg" alt="Deepesh Dash: Campus Rush Banner" width="100%" />
+  <img src="./public/banner.svg" alt="Campus Rush Banner" width="100%" />
 </p>
 
 <p align="center">
@@ -41,9 +41,9 @@
 
 ## 📖 Overview & Narrative
 
-**DEEPESH DASH: CAMPUS RUSH** is a 3D endless runner set across an Indian urban university campus.
+**CAMPUS RUSH** is a 3D endless runner set across an Indian urban university campus.
 
-The player steps into the shoes of **Deepesh**, a tech student sprinting through the campus to reach the prestigious **Demo Day showcase** before time runs out. Along the path, players dodge campus security barricades, potholes, supply carts, tea stalls (*chai tapris*), and iconic green-and-yellow auto-rickshaws, while sliding beneath low-hanging event banners, snatching Byte Coins, and collecting Idea Sparks to unleash the game's signature **Focus Mode**.
+The player steps into the shoes of a student sprinting through the campus to reach the prestigious **Demo Day showcase** before time runs out. Along the path, players dodge campus security barricades, potholes, supply carts, tea stalls (*chai tapris*), and iconic green-and-yellow auto-rickshaws, while sliding beneath low-hanging event banners, snatching Byte Coins, and collecting Idea Sparks to unleash the game's signature **Focus Mode**.
 
 ### Design Philosophy
 - **Zero Asset Latency**: Built without external 3D models or audio files; all 3D geometries and materials are generated via Three.js primitives, and all music and sound effects are procedurally generated in real time through the Web Audio API.
@@ -144,7 +144,7 @@ Players can unlock and equip stylized student outfits using Byte Coins:
 
 | Outfit | Cost | Color Scheme | Lore Description |
 | :--- | :---: | :--- | :--- |
-| **Demo Day Hustle** | `Default (Free)` | Deep Indigo & Electric Cyan | Deepesh's signature pitch hoodie with laptop compartment backpack. |
+| **Demo Day Hustle** | `Default (Free)` | Deep Indigo & Electric Cyan | The runner's signature pitch hoodie with laptop compartment backpack. |
 | **Bhopal Lakefront Casual** | `100 Coins` | Warm Saffron & Sunset Coral | Relaxed VIP Road lakefront jacket with matching shades. |
 | **Cyber Hacker Neon** | `250 Coins` | Midnight Dark & Emissive Violet | Cyber matrix runner with circuit lines and cyan glow accents. |
 | **Campus Fest Fusion** | `500 Coins` | Royal Blue & Festive Marigold | Royal traditional-modern fusion attire for celebrating campus victory. |
@@ -464,5 +464,5 @@ copies or substantial portions of the Software.
 ```
 
 <p align="center">
-  <strong>DEEPESH DASH: CAMPUS RUSH</strong> • Built with passion for high-speed campus fun.
+  <strong>CAMPUS RUSH</strong> • Built with passion for high-speed campus fun.
 </p>

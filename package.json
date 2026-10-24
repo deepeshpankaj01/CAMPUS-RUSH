@@ -18,7 +18,7 @@
     "offline-ready",
     "arcade"
   ],
-  "author": "Deepesh Pankaj",
+  "author": "Campus Rush Team",
   "license": "MIT",
   "dependencies": {
     "canvas-confetti": "^1.9.4",

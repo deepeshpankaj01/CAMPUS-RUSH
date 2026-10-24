@@ -81,29 +81,29 @@ server.listen(PORT, async () => {
     fs.writeFileSync('dist/menu-screenshot.png', Buffer.from(ssMenu.data, 'base64'));
     console.log('Saved dist/menu-screenshot.png');
 
-    // 2. Open Locker Modal
+    // 2. Click Play Now
     await send('Runtime.evaluate', {
-      expression: 'document.getElementById("btn-menu-locker").click()'
+      expression: 'document.getElementById("btn-play-now").click()'
+    });
+    await new Promise((r) => setTimeout(r, 1500));
+    const ssGame = await send('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync('dist/ingame-screenshot.png', Buffer.from(ssGame.data, 'base64'));
+    console.log('Saved dist/ingame-screenshot.png');
+
+    // 3. Click Pause Button
+    await send('Runtime.evaluate', {
+      expression: 'document.getElementById("btn-hud-pause").click()'
     });
     await new Promise((r) => setTimeout(r, 500));
-    const ssLocker = await send('Page.captureScreenshot', { format: 'png' });
-    fs.writeFileSync('dist/locker-screenshot.png', Buffer.from(ssLocker.data, 'base64'));
-    console.log('Saved dist/locker-screenshot.png');
+    const ssPause = await send('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync('dist/pause-screenshot.png', Buffer.from(ssPause.data, 'base64'));
+    console.log('Saved dist/pause-screenshot.png');
 
-    // Close modal
+    // 4. Click Resume Button
     await send('Runtime.evaluate', {
-      expression: 'document.getElementById("btn-close-modal").click()'
-    });
-    await new Promise((r) => setTimeout(r, 300));
-
-    // 3. Open Leaderboard Modal
-    await send('Runtime.evaluate', {
-      expression: 'document.getElementById("btn-menu-leaderboard").click()'
+      expression: 'document.getElementById("btn-pause-resume").click()'
     });
     await new Promise((r) => setTimeout(r, 500));
-    const ssLeaderboard = await send('Page.captureScreenshot', { format: 'png' });
-    fs.writeFileSync('dist/leaderboard-screenshot.png', Buffer.from(ssLeaderboard.data, 'base64'));
-    console.log('Saved dist/leaderboard-screenshot.png');
 
     console.log('ALL UI SCREENSHOTS CAPTURED SUCCESSFULLY!');
     ws.close();

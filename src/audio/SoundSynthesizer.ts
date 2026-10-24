@@ -1,5 +1,5 @@
 /**
- * Deepesh Dash: Campus Rush - Procedural Web Audio Synthesizer
+ * Campus Rush - Procedural Web Audio Synthesizer
  * 100% Offline, Zero external assets, Zero latency.
  */
 

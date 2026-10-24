@@ -1,5 +1,5 @@
 /**
- * Deepesh Dash: Campus Rush - Pass & Play Local Multiplayer Mode
+ * Campus Rush - Pass & Play Local Multiplayer Mode
  */
 
 export interface PassPlayer {

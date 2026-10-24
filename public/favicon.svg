@@ -1,13 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0B1020"/>
-      <stop offset="50%" stop-color="#29245E"/>
-      <stop offset="100%" stop-color="#7865FF"/>
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="50%" stop-color="#1E1B4B"/>
+      <stop offset="100%" stop-color="#2E1065"/>
     </linearGradient>
-    <linearGradient id="spark" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#41E5F5"/>
-      <stop offset="100%" stop-color="#FFB547"/>
+    <linearGradient id="runnerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="60%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#F43F5E"/>
+    </linearGradient>
+    <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
     </linearGradient>
     <filter id="glow">
       <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
@@ -19,15 +24,14 @@
   </defs>
   <!-- Background Rounded Shield -->
   <rect width="128" height="128" rx="28" fill="url(#bg)"/>
-  <rect x="4" y="4" width="120" height="120" rx="24" fill="none" stroke="#41E5F5" stroke-width="2" stroke-opacity="0.4"/>
+  <rect x="4" y="4" width="120" height="120" rx="24" fill="none" stroke="#38BDF8" stroke-width="2" stroke-opacity="0.45"/>
   
-  <!-- Stylized D Runner Symbol -->
-  <path d="M36 28 H66 C84 28 96 42 96 64 C96 86 84 100 66 100 H36 Z" fill="none" stroke="#41E5F5" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" filter="url(#glow)"/>
+  <!-- Stylized Campus Rush Dynamic Motion Chevrons -->
+  <path d="M32 94 L50 34 L80 34 L62 94 Z" fill="url(#runnerGrad)" filter="url(#glow)"/>
+  <path d="M66 94 L84 34 L102 34 L84 94 Z" fill="url(#sparkGrad)"/>
   
-  <!-- Speed Lines & Idea Spark -->
-  <path d="M52 48 L76 64 L52 80 Z" fill="url(#spark)"/>
-  <circle cx="94" cy="38" r="6" fill="#FFB547" filter="url(#glow)"/>
-  <line x1="22" y1="52" x2="30" y2="52" stroke="#41E5F5" stroke-width="4" stroke-linecap="round"/>
-  <line x1="16" y1="64" x2="28" y2="64" stroke="#FF5C7A" stroke-width="4" stroke-linecap="round"/>
-  <line x1="20" y1="76" x2="30" y2="76" stroke="#41E5F5" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="94" cy="28" r="7" fill="#FDE047" filter="url(#glow)"/>
+  <line x1="18" y1="52" x2="28" y2="52" stroke="#38BDF8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="12" y1="64" x2="26" y2="64" stroke="#F43F5E" stroke-width="4" stroke-linecap="round"/>
+  <line x1="16" y1="76" x2="28" y2="76" stroke="#38BDF8" stroke-width="4" stroke-linecap="round"/>
 </svg>

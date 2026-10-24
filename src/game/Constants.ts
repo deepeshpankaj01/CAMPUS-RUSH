@@ -1,73 +1,49 @@
 /**
- * Campus Rush - Core Constants & Balancing
+ * CAMPUS RUSH - Core Constants & Balancing
  */
 
 export const COLORS = {
-  midnightNavy: 0x0B1020,
-  deepIndigo: 0x29245E,
-  electricCyan: 0x41E5F5,
-  vividViolet: 0x7865FF,
-  warmSaffron: 0xFFB547,
-  coralAccent: 0xFF5C7A,
-  softWhite: 0xF4F6FC,
-  roadAsphalt: 0x1A1F33,
-  roadMarking: 0xFFFFFF,
-  curbColor: 0x3A4466,
-  grassCampus: 0x24553A,
-  treeLeaves: 0x2B7A4B,
-  treeTrunk: 0x5C3E25,
-  brickAcademic: 0x9B422B,
-  neonPink: 0xFF2A85
+  // Atmospheric Skies
+  skyCampus: 0x5EB4EF,
+  skyCampusFog: 0x7EC4F8,
+  skyLakefront: 0xFDBA74,
+  skyLakefrontFog: 0xFED7AA,
+  skyMarket: 0x7DD3FC,
+  skyMarketFog: 0xBAE6FD,
+  skyNeon: 0x0F172A,
+  skyNeonFog: 0x1E1B4B,
+  skyFestival: 0x2E1065,
+  skyFestivalFog: 0x3B0764,
+
+  // Palette Accents
+  midnightNavy: 0x0F172A,
+  deepIndigo: 0x1E293B,
+  electricCyan: 0x38BDF8,
+  vividViolet: 0x8B5CF6,
+  warmSaffron: 0xFBBF24,
+  coralAccent: 0xF43F5E,
+  softWhite: 0xF8FAFC,
+
+  // Road Infrastructure
+  roadAsphalt: 0x333F52,    // High-contrast slate road
+  roadMarking: 0xFFFFFF,    // Brilliant white dashed lines
+  curbColor: 0xCBD5E1,      // Clean stone curb
+  curbAccent: 0xF59E0B,     // Warm curb highlight
+
+  // Scenery & Flora
+  grassCampus: 0x22C55E,    // Lush spring campus lawn
+  grassDark: 0x16A34A,
+  treeLeaves: 0x15803D,
+  treeLeavesBright: 0x4ADE80,
+  treeLeavesAccent: 0xEA580C, // Flowering shade tree
+  treeTrunk: 0x78350F,
+  brickAcademic: 0xB45309,  // Rich campus brick
+  brickTrim: 0xF8FAFC,      // Clean architectural trim
+  neonPink: 0xF43F5E
 };
 
 export const LANES = [-3.2, 0, 3.2] as const;
 export type LaneIndex = 0 | 1 | 2;
-
-export type ZoneType = 'CAMPUS_MORNING' | 'BHOPAL_LAKEFRONT' | 'MARKET_RUSH' | 'NEON_CODE_CITY' | 'FESTIVAL_NIGHTS';
-
-export interface StageInfo {
-  stage: number;
-  name: string;
-  zone: ZoneType;
-}
-
-export const ZONE_SEQUENCE: { zone: ZoneType; name: string }[] = [
-  { zone: 'CAMPUS_MORNING', name: 'Campus Morning' },
-  { zone: 'BHOPAL_LAKEFRONT', name: 'Bhopal Lakefront' },
-  { zone: 'MARKET_RUSH', name: 'Market Rush' },
-  { zone: 'NEON_CODE_CITY', name: 'Neon City' },
-  { zone: 'FESTIVAL_NIGHTS', name: 'Festival Nights' }
-];
-
-export function getStageInfo(totalDistanceMeters: number): StageInfo {
-  const stageDistances = [0, 450, 950, 1500, 2100];
-  let stage = 1;
-
-  if (totalDistanceMeters < stageDistances[1]) {
-    stage = 1;
-  } else if (totalDistanceMeters < stageDistances[2]) {
-    stage = 2;
-  } else if (totalDistanceMeters < stageDistances[3]) {
-    stage = 3;
-  } else if (totalDistanceMeters < stageDistances[4]) {
-    stage = 4;
-  } else if (totalDistanceMeters < 2700) {
-    stage = 5;
-  } else {
-    // Endless progression beyond 2700m (each 550m adds a stage)
-    const extra = totalDistanceMeters - 2700;
-    stage = 5 + Math.floor(extra / 550) + 1;
-  }
-
-  const seqIndex = (stage - 1) % ZONE_SEQUENCE.length;
-  const { zone, name } = ZONE_SEQUENCE[seqIndex];
-
-  return {
-    stage,
-    name,
-    zone
-  };
-}
 
 export const GAME_CONFIG = {
   // Movement & Physics
@@ -100,7 +76,8 @@ export const GAME_CONFIG = {
   // Zone Distance Thresholds (meters)
   zoneDistances: {
     campusMorning: 0,
-    bhopalLakefront: 450,
+    lakefront: 450,
+    bhopalLakefront: 450, // Backwards compatible alias
     marketRush: 950,
     neonCodeCity: 1500,
     festivalNights: 2100
@@ -121,42 +98,42 @@ export interface OutfitDefinition {
 export const OUTFITS: OutfitDefinition[] = [
   {
     id: 'demo_day',
-    name: 'Demo Day Hustle',
+    name: 'Campus Sprint',
     cost: 0,
-    hoodieColor: 0x29245E,
-    pantsColor: 0x0B1020,
-    accentColor: 0x41E5F5,
-    glowColor: 0x41E5F5,
-    description: 'The official campus tech hoodie. Ready to pitch.'
+    hoodieColor: 0x2563EB,     // Vibrant athletic cobalt
+    pantsColor: 0x1E293B,      // Charcoal athletic joggers
+    accentColor: 0x38BDF8,     // Electric cyan runner stripes
+    glowColor: 0x38BDF8,
+    description: 'The signature campus athletic kit. Built for speed.'
   },
   {
     id: 'bhopal_lake',
-    name: 'Bhopal Lakefront Casual',
+    name: 'Lakefront Runner',
     cost: 100,
-    hoodieColor: 0xFFB547,
-    pantsColor: 0x2A324B,
-    accentColor: 0xFF5C7A,
-    glowColor: 0xFFB547,
-    description: 'Chilled VIP road sunset vibes with saffron jacket.'
+    hoodieColor: 0xF59E0B,     // Warm amber windbreaker
+    pantsColor: 0x334155,
+    accentColor: 0xF43F5E,
+    glowColor: 0xF59E0B,
+    description: 'Breezy lakeside windbreaker with sunset trim.'
   },
   {
     id: 'cyber_neon',
-    name: 'Cyber Hacker Neon',
+    name: 'Cyber Neon',
     cost: 250,
-    hoodieColor: 0x11162B,
-    pantsColor: 0x0A0D1A,
-    accentColor: 0x7865FF,
-    glowColor: 0x41E5F5,
-    description: 'Emissive cyber matrix runner with glowing circuits.'
+    hoodieColor: 0x0F172A,
+    pantsColor: 0x020617,
+    accentColor: 0x8B5CF6,
+    glowColor: 0x38BDF8,
+    description: 'High-contrast runner suit with illuminated circuit trim.'
   },
   {
     id: 'fest_kurta',
-    name: 'Campus Fest Fusion',
+    name: 'Festival Spirit',
     cost: 500,
-    hoodieColor: 0x1E3A8A,
-    pantsColor: 0xF4F6FC,
-    accentColor: 0xFFB547,
-    glowColor: 0xFFB547,
-    description: 'Royal festive attire for winning the tech showcase!'
+    hoodieColor: 0x0284C7,
+    pantsColor: 0xF8FAFC,
+    accentColor: 0xF59E0B,
+    glowColor: 0xF59E0B,
+    description: 'Festive campus celebratory attire.'
   }
 ];

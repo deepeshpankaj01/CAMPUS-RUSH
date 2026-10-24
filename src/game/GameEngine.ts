@@ -1,5 +1,5 @@
 /**
- * Campus Rush - Core Game Engine & Loop Coordinator
+ * CAMPUS RUSH - Core Game Engine & Loop Coordinator
  */
 import { GAME_CONFIG } from './Constants';
 import { GameRenderer } from './Renderer';
@@ -18,8 +18,6 @@ export type EngineState = 'MENU' | 'PLAYING' | 'PAUSED' | 'GAMEOVER';
 export interface GameStats {
   score: number;
   distance: number;
-  stage: number;
-  stageName: string;
   coins: number;
   sparks: number;
   multiplier: number;
@@ -44,8 +42,6 @@ export class GameEngine {
   // Run stats
   public score: number = 0;
   public distanceMeters: number = 0;
-  public currentStage: number = 1;
-  public currentStageName: string = 'Campus Morning';
   public coinsCollected: number = 0;
   public sparksCollected: number = 0;
   public baseMultiplier: number = 1;
@@ -66,9 +62,10 @@ export class GameEngine {
 
   // Event callbacks for UI
   public onStatsUpdate: ((stats: GameStats) => void) | null = null;
-  public onLevelUp: ((stage: number, stageName: string) => void) | null = null;
-  public onGameOver: ((result: { score: number; distance: number; stage: number; coins: number; isNewBest: boolean; rank: number }) => void) | null = null;
+  public onGameOver: ((result: { score: number; distance: number; coins: number; isNewBest: boolean; rank: number }) => void) | null = null;
   public onFocusModeChange: ((active: boolean) => void) | null = null;
+  public onPauseRequested: (() => void) | null = null;
+  public onZoneAnnounce: ((zoneName: string) => void) | null = null;
 
   constructor(container: HTMLElement) {
     this.renderer = new GameRenderer(container);
@@ -76,6 +73,12 @@ export class GameEngine {
     this.renderer.scene.add(this.player.group);
 
     this.environment = new EnvironmentManager(this.renderer.scene, this.renderer);
+    this.environment.onZoneChange = (zoneName) => {
+      if (this.state === 'PLAYING' && this.onZoneAnnounce) {
+        this.onZoneAnnounce(zoneName);
+      }
+    };
+
     this.obstacles = new ObstacleManager(this.renderer.scene);
     this.collectibles = new CollectiblesManager(this.renderer.scene);
     this.particles = new ParticleSystem(this.renderer.scene);
@@ -83,16 +86,30 @@ export class GameEngine {
     // Apply equipped outfit
     this.player.setOutfit(storage.getEquippedOutfit());
 
+    // Listen for tab visibility changes to pause safely
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+
     // Start engine loop
     this.lastTime = performance.now();
     this.loop();
   }
 
+  private handleVisibilityChange = (): void => {
+    if (document.hidden) {
+      if (this.state === 'PLAYING') {
+        this.pause();
+        if (this.onPauseRequested) {
+          this.onPauseRequested();
+        }
+      }
+    } else {
+      this.lastTime = performance.now();
+    }
+  };
+
   public startRun(): void {
     this.score = 0;
     this.distanceMeters = 0;
-    this.currentStage = 1;
-    this.currentStageName = 'Campus Morning';
     this.coinsCollected = 0;
     this.sparksCollected = 0;
     this.baseMultiplier = 1;
@@ -113,6 +130,7 @@ export class GameEngine {
     missionManager.resetRun();
 
     this.state = 'PLAYING';
+    this.renderer.setMenuMode(false);
     this.lastTime = performance.now();
     soundManager.startMusic();
     soundManager.setGameSpeed(1.0);
@@ -147,7 +165,7 @@ export class GameEngine {
     this.lastTime = now;
 
     // Clamp delta-time to prevent physics glitches if browser tab was inactive
-    dt = Math.min(dt, 0.08);
+    dt = Math.min(Math.max(dt, 0), 0.05);
 
     if (this.state === 'PLAYING') {
       this.updatePlaying(dt);
@@ -162,12 +180,14 @@ export class GameEngine {
   };
 
   private updateMenu(dt: number): void {
+    // Gentle scenic drift in main menu preview
     const previewSpeed = 8.0;
     this.environment.update(previewSpeed, dt, 0);
     this.player.update(dt, 0.6);
   }
 
   private updateGameOver(dt: number): void {
+    // Slowly halt scenery and animate tumble
     this.player.update(dt, 0.2);
   }
 
@@ -188,17 +208,6 @@ export class GameEngine {
       GAME_CONFIG.maxSpeed,
       GAME_CONFIG.initialSpeed + this.distanceMeters * GAME_CONFIG.speedAcceleration
     );
-
-    // Check level progression
-    const stageInfo = this.environment.getStageInfo(this.distanceMeters);
-    if (stageInfo.stage !== this.currentStage) {
-      this.currentStage = stageInfo.stage;
-      this.currentStageName = stageInfo.name;
-      soundManager.playMissionComplete();
-      if (this.onLevelUp) {
-        this.onLevelUp(this.currentStage, this.currentStageName);
-      }
-    }
 
     // Score accumulation (10 points per meter * active multiplier)
     const activeMultiplier = this.getActiveMultiplier();
@@ -239,8 +248,6 @@ export class GameEngine {
       this.onStatsUpdate({
         score: this.score,
         distance: Math.round(this.distanceMeters),
-        stage: this.currentStage,
-        stageName: this.currentStageName,
         coins: this.coinsCollected,
         sparks: this.focusModeSparks,
         multiplier: activeMultiplier,
@@ -255,10 +262,12 @@ export class GameEngine {
   }
 
   private updateTimers(dt: number): void {
+    // Invulnerability timer
     if (this.invulnerabilityTimer > 0) {
       this.invulnerabilityTimer -= dt;
     }
 
+    // Focus Mode timer
     if (this.focusTimer > 0) {
       this.focusTimer -= dt;
       if (this.focusTimer <= 0) {
@@ -269,6 +278,7 @@ export class GameEngine {
       }
     }
 
+    // Code Magnet timer
     if (this.magnetTimer > 0) {
       this.magnetTimer -= dt;
       if (this.magnetTimer <= 0) {
@@ -277,6 +287,7 @@ export class GameEngine {
       }
     }
 
+    // Sprint Boost timer
     if (this.sprintTimer > 0) {
       this.sprintTimer -= dt;
       if (this.sprintTimer <= 0) {
@@ -321,6 +332,7 @@ export class GameEngine {
           soundManager.playSpark();
           this.particles.burstSpark(item.group.position);
 
+          // Check Focus Mode Trigger
           if (this.focusModeSparks >= GAME_CONFIG.sparksForFocus) {
             this.triggerFocusMode();
           }
@@ -368,6 +380,7 @@ export class GameEngine {
 
     if (!hitObs) return;
 
+    // Case 1: Sprint Boost is active -> Player smashes through obstacle safely!
     if (this.sprintTimer > 0) {
       hitObs.active = false;
       this.particles.burstCoins(hitObs.group.position);
@@ -375,15 +388,17 @@ export class GameEngine {
       return;
     }
 
+    // Case 2: Notebook Shield is active -> Absorbs hit and protects player!
     if (this.player.hasShield) {
       this.player.hasShield = false;
       hitObs.active = false;
-      this.invulnerabilityTimer = 1.2;
+      this.invulnerabilityTimer = 1.2; // 1.2s post-hit invulnerability grace period
       soundManager.playShieldAbsorb();
       this.particles.burstShield(this.player.group.position);
       return;
     }
 
+    // Case 3: Fatal Collision -> Game Over
     this.handleGameOver();
   }
 
@@ -395,21 +410,21 @@ export class GameEngine {
 
     const finalScore = this.score;
     const finalDistance = Math.round(this.distanceMeters);
-    const finalStage = this.currentStage;
     const finalCoins = this.coinsCollected;
 
+    // Save run and update leaderboard
     const { isNewHighScore, rank } = storage.recordRun(finalScore, finalDistance, finalCoins);
 
     if (passAndPlay.isActive) {
       passAndPlay.recordCurrentRun(finalScore, finalDistance, finalCoins);
     }
 
+    // Delay showing game over screen for 0.7s to let stumble animation play cleanly
     setTimeout(() => {
       if (this.onGameOver) {
         this.onGameOver({
           score: finalScore,
           distance: finalDistance,
-          stage: finalStage,
           coins: finalCoins,
           isNewBest: isNewHighScore,
           rank
@@ -418,6 +433,7 @@ export class GameEngine {
     }, 700);
   }
 
+  // Input bindings
   public handleLeft(): void {
     if (this.state === 'PLAYING') {
       this.player.moveLeft();
@@ -459,16 +475,15 @@ export class GameEngine {
   public returnToMenu(): void {
     this.state = 'MENU';
     this.player.reset();
+    this.renderer.setMenuMode(true);
     soundManager.stopMusic();
   }
 
   public dispose(): void {
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);
     }
-    this.environment.dispose();
-    this.obstacles.dispose();
-    this.collectibles.dispose();
     this.renderer.dispose();
   }
 }

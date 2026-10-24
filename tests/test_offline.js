@@ -88,9 +88,9 @@ server.listen(PORT, async () => {
     // Set a high score in localStorage to test persistence through offline reload
     await send('Runtime.evaluate', {
       expression: `
-        const data = JSON.parse(localStorage.getItem('deepesh_dash_save_v1') || '{}');
+        const data = JSON.parse(localStorage.getItem('campus_rush_save_v1') || '{}');
         data.highScore = 99999;
-        localStorage.setItem('deepesh_dash_save_v1', JSON.stringify(data));
+        localStorage.setItem('campus_rush_save_v1', JSON.stringify(data));
       `
     });
 
@@ -132,7 +132,7 @@ server.listen(PORT, async () => {
 
     // Verify High Score persisted through offline reload
     const scoreRes = await send('Runtime.evaluate', {
-      expression: `JSON.parse(localStorage.getItem('deepesh_dash_save_v1')).highScore`
+      expression: `JSON.parse(localStorage.getItem('campus_rush_save_v1')).highScore`
     });
     console.log(`[Offline Verify] Stored High Score survived reload: ${scoreRes.result.value}`);
     if (scoreRes.result.value !== 99999) {

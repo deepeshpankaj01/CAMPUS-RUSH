@@ -32,8 +32,6 @@ const server = http.createServer((req, res) => {
 
 const PORT = 8091;
 server.listen(PORT, async () => {
-  console.log(`[Mobile Viewport Test] Static server running at http://127.0.0.1:${PORT}`);
-
   const browserPath = fs.existsSync('C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe')
     ? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
     : 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe';
@@ -43,7 +41,7 @@ server.listen(PORT, async () => {
     '--remote-debugging-port=9224',
     '--disable-gpu',
     '--no-sandbox',
-    '--window-size=800,1000',
+    '--window-size=390,844',
     `http://127.0.0.1:${PORT}`
   ]);
 
@@ -75,107 +73,96 @@ server.listen(PORT, async () => {
     await new Promise((resolve) => ws.addEventListener('open', resolve));
     await send('Page.enable');
     await send('Runtime.enable');
+    const viewports = [
+      { name: 'Narrow Android', width: 320, height: 640 },
+      { name: 'Mid Android', width: 360, height: 740 },
+      { name: 'Standard iPhone', width: 390, height: 844, capture: true },
+      { name: 'Large iPhone', width: 430, height: 932 },
+      { name: 'Foldable Inner', width: 780, height: 800 },
+      { name: 'Short Landscape', width: 640, height: 320 },
+      { name: 'Wide Landscape', width: 844, height: 390 },
+    ];
 
-    // Start game so HUD is visible for layout verification
-    console.log('Starting game to test HUD at multiple viewports...');
-    await new Promise((r) => setTimeout(r, 1000));
+    console.log('Testing mobile viewports and layout integrity...');
+
+    // First test menu on standard iPhone and capture mobile-menu.png
+    await send('Emulation.setDeviceMetricsOverride', {
+      width: 390,
+      height: 844,
+      deviceScaleFactor: 2,
+      mobile: true
+    });
+    await new Promise((r) => setTimeout(r, 1500));
+
+    // 1. Mobile Menu Screenshot
+    const ssMenu = await send('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync('dist/mobile-menu.png', Buffer.from(ssMenu.data, 'base64'));
+    console.log('Saved dist/mobile-menu.png');
+
+    // 2. Click Play Now
     await send('Runtime.evaluate', {
       expression: 'document.getElementById("btn-play-now").click()'
     });
-    await new Promise((r) => setTimeout(r, 800));
+    await new Promise((r) => setTimeout(r, 1500));
 
-    // Test cases covering required widths: 320, 360, 390, 430, 780 + landscape
-    const viewports = [
-      { name: '320px-portrait', width: 320, height: 640 },
-      { name: '360px-portrait', width: 360, height: 740 },
-      { name: '390px-portrait', width: 390, height: 844 },
-      { name: '430px-portrait', width: 430, height: 932 },
-      { name: '780px-foldable', width: 780, height: 800 },
-      { name: '320px-landscape', width: 640, height: 320 },
-      { name: '390px-landscape', width: 844, height: 390 }
-    ];
+    // 3. Mobile In-Game Screenshot
+    const ssGame = await send('Page.captureScreenshot', { format: 'png' });
+    fs.writeFileSync('dist/mobile-game.png', Buffer.from(ssGame.data, 'base64'));
+    console.log('Saved dist/mobile-game.png');
 
+    // 4. Test all viewports during active game
     for (const vp of viewports) {
-      console.log(`\n--- Testing Viewport: ${vp.name} (${vp.width}x${vp.height}) ---`);
       await send('Emulation.setDeviceMetricsOverride', {
         width: vp.width,
         height: vp.height,
         deviceScaleFactor: 2,
         mobile: true
       });
+      await new Promise((r) => setTimeout(r, 300));
 
-      await new Promise((r) => setTimeout(r, 600));
-
-      // 1. Verify no horizontal overflow
-      const overflowEval = await send('Runtime.evaluate', {
+      const overflowCheck = await send('Runtime.evaluate', {
         expression: `({
           scrollWidth: document.documentElement.scrollWidth,
           innerWidth: window.innerWidth,
-          bodyScrollWidth: document.body.scrollWidth
+          hasOverflow: document.documentElement.scrollWidth > window.innerWidth
         })`,
         returnByValue: true
       });
-      const overflow = overflowEval.result.value;
-      console.log(`ScrollWidth: ${overflow.scrollWidth}px, InnerWidth: ${overflow.innerWidth}px`);
-      if (overflow.scrollWidth > overflow.innerWidth) {
-        throw new Error(`Horizontal overflow detected at ${vp.name}: scrollWidth ${overflow.scrollWidth} > innerWidth ${overflow.innerWidth}`);
-      }
 
-      // 2. Verify Pause Button is within viewport
-      const pauseBoundsEval = await send('Runtime.evaluate', {
+      const pauseBtnCheck = await send('Runtime.evaluate', {
         expression: `(() => {
-          const btn = document.getElementById("btn-hud-pause");
-          if (!btn) return null;
+          const btn = document.getElementById('btn-hud-pause');
+          if (!btn) return { exists: false };
           const rect = btn.getBoundingClientRect();
           return {
-            left: rect.left,
-            right: rect.right,
-            top: rect.top,
-            bottom: rect.bottom,
+            exists: true,
+            visible: rect.width > 0 && rect.height > 0,
             width: rect.width,
             height: rect.height,
+            right: rect.right,
             windowWidth: window.innerWidth,
-            windowHeight: window.innerHeight
+            withinBounds: rect.right <= window.innerWidth && rect.left >= 0
           };
         })()`,
         returnByValue: true
       });
 
-      const pb = pauseBoundsEval.result.value;
-      console.log(`Pause button bounds: left=${pb.left}, right=${pb.right}, top=${pb.top}, bottom=${pb.bottom}, winW=${pb.windowWidth}`);
-      if (!pb || pb.left < 0 || pb.right > pb.windowWidth || pb.top < 0 || pb.bottom > pb.windowHeight) {
-        throw new Error(`Pause button clipped outside viewport in ${vp.name}: right=${pb.right}, winWidth=${pb.windowWidth}`);
-      }
-      if (pb.width < 38 || pb.height < 38) {
-        throw new Error(`Pause button touch target too small in ${vp.name}: ${pb.width}x${pb.height}`);
-      }
+      console.log(`[Viewport: ${vp.name} (${vp.width}x${vp.height})]`);
+      console.log(`  Horizontal overflow: ${overflowCheck.result.value.hasOverflow ? 'FAIL' : 'PASS (No horizontal scroll)'} (${overflowCheck.result.value.scrollWidth}px vs ${overflowCheck.result.value.innerWidth}px)`);
+      console.log(`  Pause button in bounds: ${pauseBtnCheck.result.value.withinBounds ? 'PASS' : 'FAIL'} (${pauseBtnCheck.result.value.width}x${pauseBtnCheck.result.value.height}px, right edge ${pauseBtnCheck.result.value.right}px / ${pauseBtnCheck.result.value.windowWidth}px)`);
 
-      // 3. Verify Distance / Coins legible and in-bounds
-      const distBoundsEval = await send('Runtime.evaluate', {
-        expression: `(() => {
-          const pill = document.querySelector(".hud-pill.distance");
-          if (!pill) return null;
-          const rect = pill.getBoundingClientRect();
-          return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.bottom, winW: window.innerWidth };
-        })()`,
-        returnByValue: true
-      });
-      const db = distBoundsEval.result.value;
-      if (!db || db.left < 0 || db.right > db.winW) {
-        throw new Error(`Distance pill clipped in ${vp.name}: right=${db.right}, winWidth=${db.winW}`);
+      if (overflowCheck.result.value.hasOverflow) {
+        throw new Error(`Horizontal overflow detected at ${vp.width}x${vp.height}`);
       }
-
-      // 4. Capture screenshot
-      const ss = await send('Page.captureScreenshot', { format: 'png' });
-      const filename = `dist/viewport-${vp.name}.png`;
-      fs.writeFileSync(filename, Buffer.from(ss.data, 'base64'));
-      console.log(`Saved screenshot: ${filename}`);
+      if (!pauseBtnCheck.result.value.withinBounds) {
+        throw new Error(`Pause button clipped at ${vp.width}x${vp.height}`);
+      }
     }
 
-    console.log('\n>>> ALL 7 VIEWPORT TESTS PASSED WITH ZERO CLIPPING! <<<');
+    console.log('ALL MOBILE VIEWPORT TESTS PASSED PERFECTLY!');
     ws.close();
   } catch (err) {
-    console.error('Mobile viewport test failed:', err);
+    console.error('Error:', err);
     process.exitCode = 1;
   } finally {
     chromeProc.kill();

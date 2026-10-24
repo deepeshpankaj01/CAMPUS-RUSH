@@ -1,5 +1,6 @@
 /**
- * Campus Rush - Local Data & State Persistence
+ * CAMPUS RUSH - Local Data & State Persistence
+ * Sanitized storage, no fake seeded personas, clean migration
  */
 
 export interface LeaderboardEntry {
@@ -24,76 +25,82 @@ export interface PlayerSaveData {
   playerName: string;
 }
 
-const STORAGE_KEY = 'deepesh_dash_save_v1';
+const STORAGE_KEY = 'campus_rush_save_v1';
+const LEGACY_STORAGE_KEY = 'deepesh_dash_save_v1';
 
-// Known legacy seeded entries to sanitize from existing localStorage
-const FAKE_STARTER_NAMES = new Set(['Deepesh P', 'Aarav K', 'Pooja S', 'Vikram M', 'Ananya R']);
+const FAKE_SAMPLE_NAMES = new Set(['Deepesh P', 'Deepesh', 'Aarav K', 'Pooja S', 'Vikram M', 'Ananya R']);
 
-export function createDefaultData(): PlayerSaveData {
-  return {
-    highScore: 0,
-    maxDistance: 0,
-    byteCoins: 0,
-    equippedOutfit: 'demo_day',
-    unlockedOutfits: ['demo_day'],
-    leaderboard: [],
-    completedMissions: [],
-    missionProgress: {},
-    touchControls: false,
-    playerName: 'Runner'
-  };
-}
+const DEFAULT_DATA: PlayerSaveData = {
+  highScore: 0,
+  maxDistance: 0,
+  byteCoins: 0,
+  equippedOutfit: 'demo_day',
+  unlockedOutfits: ['demo_day'],
+  leaderboard: [],
+  completedMissions: [],
+  missionProgress: {},
+  touchControls: false,
+  playerName: 'Runner'
+};
 
 export class StorageManager {
-  private data: PlayerSaveData;
+  private data: PlayerSaveData = { ...DEFAULT_DATA };
 
   constructor() {
-    this.data = createDefaultData();
     this.load();
   }
 
   public load(): PlayerSaveData {
     try {
       if (typeof localStorage !== 'undefined') {
-        const raw = localStorage.getItem(STORAGE_KEY);
+        let raw = localStorage.getItem(STORAGE_KEY);
+        let isLegacyMigration = false;
+
+        if (!raw) {
+          raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+          if (raw) isLegacyMigration = true;
+        }
+
         if (raw) {
           const parsed = JSON.parse(raw);
-          const defaults = createDefaultData();
 
-          // Sanitize leaderboard entries (remove any fake starter rows)
-          let cleanLeaderboard: LeaderboardEntry[] = [];
-          if (Array.isArray(parsed.leaderboard)) {
-            cleanLeaderboard = parsed.leaderboard.filter(
-              (entry: LeaderboardEntry) => entry && !FAKE_STARTER_NAMES.has(entry.name) && entry.id !== '1' && entry.id !== '2' && entry.id !== '3' && entry.id !== '4' && entry.id !== '5'
-            );
+          // Sanitize leaderboard (remove any legacy fake seeded records)
+          const rawBoard: LeaderboardEntry[] = Array.isArray(parsed.leaderboard) ? parsed.leaderboard : [];
+          const cleanBoard = rawBoard.filter(
+            (entry) => entry && typeof entry.score === 'number' && !FAKE_SAMPLE_NAMES.has(entry.name)
+          );
+
+          // Sanitize player name
+          let cleanPlayerName = typeof parsed.playerName === 'string' ? parsed.playerName.trim() : 'Runner';
+          if (!cleanPlayerName || cleanPlayerName === 'Deepesh') {
+            cleanPlayerName = 'Runner';
           }
 
-          // Sanitize player name (clear any old personal-name branding defaults)
-          const isLegacyName = !parsed.playerName ||
-            FAKE_STARTER_NAMES.has(parsed.playerName) ||
-            /^deepesh/i.test(parsed.playerName);
-
-          const cleanPlayerName = !isLegacyName
-            ? String(parsed.playerName).trim().slice(0, 14) || 'Runner'
-            : 'Runner';
-
           this.data = {
-            ...defaults,
+            ...DEFAULT_DATA,
             ...parsed,
-            unlockedOutfits: Array.isArray(parsed.unlockedOutfits) ? parsed.unlockedOutfits : defaults.unlockedOutfits,
-            leaderboard: cleanLeaderboard,
+            highScore: typeof parsed.highScore === 'number' && isFinite(parsed.highScore) ? parsed.highScore : 0,
+            maxDistance: typeof parsed.maxDistance === 'number' && isFinite(parsed.maxDistance) ? parsed.maxDistance : 0,
+            byteCoins: typeof parsed.byteCoins === 'number' && isFinite(parsed.byteCoins) ? parsed.byteCoins : 0,
+            unlockedOutfits: Array.isArray(parsed.unlockedOutfits) ? parsed.unlockedOutfits : ['demo_day'],
+            leaderboard: cleanBoard,
             completedMissions: Array.isArray(parsed.completedMissions) ? parsed.completedMissions : [],
             missionProgress: typeof parsed.missionProgress === 'object' && parsed.missionProgress ? parsed.missionProgress : {},
             playerName: cleanPlayerName
           };
+
+          if (isLegacyMigration) {
+            this.save();
+          }
+
           return this.data;
         }
       }
-      this.data = createDefaultData();
+      this.data = { ...DEFAULT_DATA };
       this.save();
     } catch (e) {
       console.warn('Could not read localStorage, using defaults:', e);
-      this.data = createDefaultData();
+      this.data = { ...DEFAULT_DATA };
     }
     return this.data;
   }
@@ -183,23 +190,24 @@ export class StorageManager {
 
     this.data.byteCoins += coins;
 
+    // Add to personal leaderboard
     const newEntry: LeaderboardEntry = {
       id: Date.now().toString(),
       name: this.getPlayerName(),
       score,
       distance: Math.round(distance),
       coins,
-      date: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+      date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     };
 
     this.data.leaderboard.push(newEntry);
     this.data.leaderboard.sort((a, b) => b.score - a.score);
-    this.data.leaderboard = this.data.leaderboard.slice(0, 10);
+    this.data.leaderboard = this.data.leaderboard.slice(0, 10); // Keep top 10
 
     const rank = this.data.leaderboard.findIndex((entry) => entry.id === newEntry.id) + 1;
 
     this.save();
-    return { isNewHighScore, rank: rank > 0 ? rank : 10 };
+    return { isNewHighScore, rank: rank > 0 ? rank : 1 };
   }
 
   public getLeaderboard(): LeaderboardEntry[] {
@@ -236,13 +244,16 @@ export class StorageManager {
   }
 
   public resetAllData(): void {
-    this.data = createDefaultData();
+    this.data = { ...DEFAULT_DATA };
     try {
-      localStorage.removeItem(STORAGE_KEY);
-      localStorage.removeItem('dd_music_vol');
-      localStorage.removeItem('dd_sfx_vol');
-      localStorage.removeItem('dd_music_mute');
-      localStorage.removeItem('dd_sfx_mute');
+      if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        localStorage.removeItem('dd_music_vol');
+        localStorage.removeItem('dd_sfx_vol');
+        localStorage.removeItem('dd_music_mute');
+        localStorage.removeItem('dd_sfx_mute');
+      }
     } catch (e) {
       console.warn(e);
     }

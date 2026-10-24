@@ -1,5 +1,5 @@
 /**
- * Deepesh Dash: Campus Rush - Deepesh 3D Character Model & Animations
+ * CAMPUS RUSH - 3D Character Model & Animations
  */
 import * as THREE from 'three';
 import { COLORS, GAME_CONFIG, LANES, LaneIndex, OUTFITS, OutfitDefinition } from './Constants';
@@ -194,25 +194,26 @@ export class Player {
     this.bodyRoot.add(this.leftLegGroup);
     this.bodyRoot.add(this.rightLegGroup);
 
-    // 6. Contact Shadow Mesh on ground
-    const shadowGeo = new THREE.PlaneGeometry(1.4, 2.0);
+    // 6. Soft Oval Contact Shadow Mesh on ground
+    const shadowGeo = new THREE.RingGeometry(0, 0.75, 20);
     const shadowMat = new THREE.MeshBasicMaterial({
-      color: 0x000000,
+      color: 0x0A0F1D,
       transparent: true,
-      opacity: 0.45,
+      opacity: 0.38,
       depthWrite: false
     });
     this.shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
     this.shadowMesh.rotation.x = -Math.PI / 2;
     this.shadowMesh.position.y = 0.02;
+    this.shadowMesh.scale.set(1.0, 1.45, 1.0);
     this.group.add(this.shadowMesh);
 
     // 7. Notebook Shield 3D Forcefield Sphere
-    const shieldGeo = new THREE.IcosahedronGeometry(1.5, 2);
+    const shieldGeo = new THREE.IcosahedronGeometry(1.4, 2);
     const shieldMat = new THREE.MeshStandardMaterial({
       color: COLORS.electricCyan,
       transparent: true,
-      opacity: 0.35,
+      opacity: 0.32,
       wireframe: true,
       emissive: COLORS.electricCyan,
       emissiveIntensity: 0.6
@@ -222,16 +223,16 @@ export class Player {
     this.shieldMesh.visible = false;
     this.group.add(this.shieldMesh);
 
-    // 8. Code Magnet Magnetic Pulse Ring
-    const magnetGeo = new THREE.TorusGeometry(1.6, 0.06, 8, 24);
+    // 8. Code Magnet Magnetic Energy Field (Compact Torus at torso height)
+    const magnetGeo = new THREE.TorusGeometry(0.85, 0.04, 8, 24);
     const magnetMat = new THREE.MeshBasicMaterial({
-      color: COLORS.coralAccent,
+      color: COLORS.electricCyan,
       transparent: true,
-      opacity: 0.7
+      opacity: 0.75
     });
     this.magnetRingMesh = new THREE.Mesh(magnetGeo, magnetMat);
-    this.magnetRingMesh.rotation.x = Math.PI / 2;
-    this.magnetRingMesh.position.y = 0.3;
+    this.magnetRingMesh.rotation.x = Math.PI / 2.3;
+    this.magnetRingMesh.position.y = 1.15;
     this.magnetRingMesh.visible = false;
     this.group.add(this.magnetRingMesh);
 
@@ -420,8 +421,8 @@ export class Player {
 
     // 4. Dynamic Shadow adjustment
     const shadowScale = Math.max(0.4, 1.0 - this.y / 4.0);
-    this.shadowMesh.scale.set(shadowScale, shadowScale, 1);
-    (this.shadowMesh.material as THREE.MeshBasicMaterial).opacity = Math.max(0.1, 0.45 - this.y * 0.1);
+    this.shadowMesh.scale.set(shadowScale, shadowScale * 1.45, 1);
+    (this.shadowMesh.material as THREE.MeshBasicMaterial).opacity = Math.max(0.1, 0.38 - this.y * 0.1);
 
     // 5. Procedural Joint Animations
     this.animateBody(dt, speedMultiplier);
